@@ -91,15 +91,25 @@ class Board:
         self.listBoard[5][0].config(image=self.dark_green)
         self.listBoard[5][1] = "green"
 
-        self.listBoard[1][0].image = self.dark_red
+        self.listBoard[1][0].image = self.dark_green
         self.listBoard[1][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[1][0].config(image=self.dark_red)
-        self.listBoard[1][1] = "red"
+        self.listBoard[1][0].config(image=self.dark_green)
+        self.listBoard[1][1] = "green"
 
-        self.listBoard[2][0].image = self.dark_red
-        self.listBoard[2][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[2][0].config(image=self.dark_red)
-        self.listBoard[2][1] = "red"
+        self.listBoard[6][0].image = self.dark_red
+        self.listBoard[6][0].bind("<Button-1>", self.handlePieceClick)
+        self.listBoard[6][0].config(image=self.dark_red)
+        self.listBoard[6][1] = "red"
+
+        self.listBoard[7][0].image = self.dark_red
+        self.listBoard[7][0].bind("<Button-1>", self.handlePieceClick)
+        self.listBoard[7][0].config(image=self.dark_red)
+        self.listBoard[7][1] = "red"
+
+        self.listBoard[8][0].image = self.dark_red
+        self.listBoard[8][0].bind("<Button-1>", self.handlePieceClick)
+        self.listBoard[8][0].config(image=self.dark_red)
+        self.listBoard[8][1] = "red"
 
     def handlePieceClick(self, event):
         print("Handling", self.turn, "click")
@@ -148,6 +158,7 @@ class Board:
                     self.turn = "red"
                 else:
                     self.turn = "green"
+                
 
     def generateLegalMoves(self, x, y):
         legalMoves = []
@@ -180,7 +191,7 @@ class Board:
                     newX = x + (rowOffset*2)
                     newY = y + (columnOffset*2)
                     #   If the spot after the jump is in bounds and isn't already occupied...
-                    if self.isInBounds(newX, newY) and self.listBoard[newX * self.dimen + newY][1] is "empty":
+                    if self.isInBounds(newX, newY) and self.listBoard[newX * self.dimen + newY][1] is "empty" and [newX, newY] not in visited:
                         legalMoves.append([newX, newY])
                         self.findJumps(visited, legalMoves, newX, newY)
 
