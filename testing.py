@@ -54,17 +54,28 @@ class Board:
         self.root.mainloop()
 
     def handleClick(self, event):
-        self.handleGreenClick(event)
-        #if self.turn == "green":
-        print(event.widget.text)
-
-        #Below here is obsolete with the x,y coordinates in the Button.text
-        #x,y combined with the listBoard which contains a list of all the buttons on the board
-        #       will do the same thing
-
         xy = event.widget.text.split(",")
         x = int(xy[0])
         y = int(xy[1])
+
+        if self.buttonJustClicked is not None:
+            oldxy = self.buttonJustClicked.text.split(",")
+            oldx = int(oldxy[0])
+            oldy = int(oldxy[1])
+            legalMoves = self.generateLegalMoves(oldx, oldy)
+            if [x,y] in legalMoves:
+                print("legal move")
+                self.handleGreenClick(event)
+            else:
+                print("illegal move")
+                self.listBoard[oldx * self.dimen + oldy][1] = "green"
+                self.buttonJustClicked = None
+
+
+
+        #self.handleGreenClick(event)
+        print(event.widget.text)
+
 
 
     def tester(self):
@@ -97,5 +108,16 @@ class Board:
             self.listBoard[x * self.dimen + y][1] = "green"
             self.buttonJustClicked = None
 
+    def generateLegalMoves(self, x, y):
+        legalMoves = []
+
+        #   Find if the places around it are open
+        for row in range(x-1, x+2):
+            if row >= 0 and row < self.dimen:
+                for column in range(y-1, y+2):
+                    if column >= 0 and column < self.dimen:
+                        if self.listBoard[row * self.dimen + column][1] == "empty":
+                            legalMoves.append([row, column])
+        return legalMoves
 
 board = Board(10)
