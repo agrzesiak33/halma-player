@@ -33,6 +33,7 @@ class Board:
         self.notificationFrame.grid(row=0)
 
         #   Initialize the board to the dimensions specified
+        self.listBoard = [None for i in range(self.dimen*self.dimen)]
         self.boardFrame.grid(row=1)
         self.boardFrame.config(bg='black')
         for row in range(1, self.dimen + 1):
@@ -41,13 +42,22 @@ class Board:
                 #   Create all the buttons for the board
                 button = Button(self.boardFrame)
                 button.grid(row=row, column=column)
-                button.text = "empty"   #The text field is how we will keep track of the status of each button
+                button.text = str(row-1) +","+ str(column)   #The text field is how we will keep track of the status of each button
                 button.config(image=self.empty, width="100", height="100")
                 button.bind("<Button-1>", self.handleClick)
+                self.listBoard[((row-1) * self.dimen) + column] = button
 
+        self.tester()
         self.root.mainloop()
 
     def handleClick(self, event):
+        #if self.turn == "green":
+        print(event.widget.text)
+
+        #Below here is obsolete with the x,y coordinates in the Button.text
+        #x,y combined with the listBoard which contains a list of all the buttons on the board
+        #       will do the same thing
+
         if event.widget.text == "empty":
             print("It's empty")
             event.widget.image = self.dark_green
@@ -58,15 +68,19 @@ class Board:
             event.widget.image = self.light_green
             event.widget.text = "virtual green"
             event.widget.config(image=self.light_green)
-        elif event.eidget.text == "virtual green":
-            print("There used to be a green piece here")
-            event.widget.image = self.light_green
-            event.widget.text = "virtual green"
-            event.widget.config(image=self.light_green)
+        elif event.widget.text == "virtual green":
+            print("There used to be a virtual green piece here")
+            event.widget.image = self.empty
+            event.widget.text = "empty"
+            event.widget.config(image=self.empty)
         elif event.widget.text == "real red":
             print("there is an actual red tile here")
         elif event.widget.text == "virtual red":
             print("There used to be a red piece here")
 
+
+    def tester(self):
+        self.listBoard[4].image = self.dark_green
+        self.listBoard[4].config(image = self.dark_green)
 
 board = Board(10)
