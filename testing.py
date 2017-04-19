@@ -27,13 +27,15 @@ class Board:
 
         #   Set the notification bar to welcome the players
         var = StringVar()
-        notification = Label(self.notificationFrame, textvariable=var)
+        self.notification = Label(self.notificationFrame, textvariable=var)
         var.set("Hello welcome to Halma")
-        notification.pack()
+        self.notification.pack()
         self.notificationFrame.grid(row=0)
 
+        self.buttonJustClicked = None
+
         #   Initialize the board to the dimensions specified
-        self.listBoard = [None for i in range(self.dimen*self.dimen)]
+        self.listBoard = [[None, ""] for i in range(self.dimen*self.dimen)]
         self.boardFrame.grid(row=1)
         self.boardFrame.config(bg='black')
         for row in range(1, self.dimen + 1):
@@ -45,12 +47,14 @@ class Board:
                 button.text = str(row-1) +","+ str(column)   #The text field is how we will keep track of the status of each button
                 button.config(image=self.empty, width="100", height="100")
                 button.bind("<Button-1>", self.handleClick)
-                self.listBoard[((row-1) * self.dimen) + column] = button
+                self.listBoard[((row-1) * self.dimen) + column][0] = button
+                self.listBoard[((row-1) * self.dimen) + column][1] = "empty"
 
         self.tester()
         self.root.mainloop()
 
     def handleClick(self, event):
+        self.handleGreenClick(event)
         #if self.turn == "green":
         print(event.widget.text)
 
@@ -58,29 +62,40 @@ class Board:
         #x,y combined with the listBoard which contains a list of all the buttons on the board
         #       will do the same thing
 
-        if event.widget.text == "empty":
-            print("It's empty")
-            event.widget.image = self.dark_green
-            event.widget.text = "real green"
-            event.widget.config(image = self.dark_green)
-        elif event.widget.text == "real green":
-            print("There is an actual green tile here")
-            event.widget.image = self.light_green
-            event.widget.text = "virtual green"
-            event.widget.config(image=self.light_green)
-        elif event.widget.text == "virtual green":
-            print("There used to be a virtual green piece here")
-            event.widget.image = self.empty
-            event.widget.text = "empty"
-            event.widget.config(image=self.empty)
-        elif event.widget.text == "real red":
-            print("there is an actual red tile here")
-        elif event.widget.text == "virtual red":
-            print("There used to be a red piece here")
+        xy = event.widget.text.split(",")
+        x = int(xy[0])
+        y = int(xy[1])
 
 
     def tester(self):
-        self.listBoard[4].image = self.dark_green
-        self.listBoard[4].config(image = self.dark_green)
+        self.listBoard[4][0].image = self.dark_green
+        self.listBoard[4][0].bind("<Button-1>", self.handleGreenClick)
+        self.listBoard[4][0].config(image = self.dark_green)
+        self.listBoard[4][1]="green"
+
+    def handleGreenClick(self, event):
+        print("Handling green click")
+        xy = event.widget.text.split(",")
+        x = int(xy[0])
+        y = int(xy[1])
+
+        if self.turn is "green" and self.listBoard[x * self.dimen + y][1] is "green":
+            self.listBoard[x * self.dimen + y][1] = "selected"
+            self.buttonJustClicked = self.listBoard[x * self.dimen + y][0]
+            print("Selected a green piece")
+        elif self.turn is "green" and self.buttonJustClicked is not None:
+            print("handling making teh selection")
+            oldXY = self.buttonJustClicked.text.split(",")
+            self.listBoard[int(oldXY[0]) * self.dimen + int(oldXY[1])][1] = "empty"
+            self.buttonJustClicked.image = self.empty
+            self.buttonJustClicked.config(image = self.empty)
+            self.buttonJustClicked.unbind("<Button-1>")
+
+            event.widget.image = self.dark_green
+            event.widget.config(image = self.dark_green)
+            self.listBoard[x*self.dimen + y][0].bind("<Button-1>", self.handleGreenClick)
+            self.listBoard[x * self.dimen + y][1] = "green"
+            self.buttonJustClicked = None
+
 
 board = Board(10)
