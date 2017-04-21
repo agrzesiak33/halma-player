@@ -50,7 +50,7 @@ class Board:
                 self.listBoard[((row-1) * self.dimen) + column][0] = button
                 self.listBoard[((row-1) * self.dimen) + column][1] = "empty"
 
-        self.tester()
+        self.generateBoard(19)
         self.root.mainloop()
 
     def handleClick(self, event):
@@ -80,36 +80,45 @@ class Board:
 
 
 
-    def tester(self):
-        self.listBoard[4][0].image = self.dark_green
-        self.listBoard[4][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[4][0].config(image = self.dark_green)
-        self.listBoard[4][1]="green"
+    def generateBoard(self, numPieces):
 
-        self.listBoard[5][0].image = self.dark_green
-        self.listBoard[5][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[5][0].config(image=self.dark_green)
-        self.listBoard[5][1] = "green"
+        if(numPieces == 19):
+            numRows = 7
 
-        self.listBoard[1][0].image = self.dark_green
-        self.listBoard[1][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[1][0].config(image=self.dark_green)
-        self.listBoard[1][1] = "green"
+        #   Set the green pieces
+        for row in range(numRows):
+            if row == 0 or row == 1:
+                for column in range(numRows):
+                    self.listBoard[row * self.dimen + column][0].image = self.dark_green
+                    self.listBoard[row * self.dimen + column][0].bind("<Button-1>", self.handlePieceClick)
+                    self.listBoard[row * self.dimen + column][0].config(image=self.dark_green)
+                    self.listBoard[row * self.dimen + column][1] = "green"
+            else:
+                for column in range(numRows - row + 1):
+                    self.listBoard[row * self.dimen + column][0].image = self.dark_green
+                    self.listBoard[row * self.dimen + column][0].bind("<Button-1>", self.handlePieceClick)
+                    self.listBoard[row * self.dimen + column][0].config(image=self.dark_green)
+                    self.listBoard[row * self.dimen + column][1] = "green"
 
-        self.listBoard[6][0].image = self.dark_red
-        self.listBoard[6][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[6][0].config(image=self.dark_red)
-        self.listBoard[6][1] = "red"
 
-        self.listBoard[7][0].image = self.dark_red
-        self.listBoard[7][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[7][0].config(image=self.dark_red)
-        self.listBoard[7][1] = "red"
+        #   Set the red pieces
+        tempNumRows = self.dimen - numRows + 1
+        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
 
-        self.listBoard[8][0].image = self.dark_red
-        self.listBoard[8][0].bind("<Button-1>", self.handlePieceClick)
-        self.listBoard[8][0].config(image=self.dark_red)
-        self.listBoard[8][1] = "red"
+            if row == self.dimen - 1 or row == self.dimen - 2:
+                for column in range(self.dimen - numRows, self.dimen):
+                    self.listBoard[row * self.dimen + column][0].image = self.dark_red
+                    self.listBoard[row * self.dimen + column][0].bind("<Button-1>", self.handlePieceClick)
+                    self.listBoard[row * self.dimen + column][0].config(image=self.dark_red)
+                    self.listBoard[row * self.dimen + column][1] = "red"
+            else:
+                print(tempNumRows)
+                for column in range(tempNumRows, self.dimen):
+                    self.listBoard[row * self.dimen + column][0].image = self.dark_red
+                    self.listBoard[row * self.dimen + column][0].bind("<Button-1>", self.handlePieceClick)
+                    self.listBoard[row * self.dimen + column][0].config(image=self.dark_red)
+                    self.listBoard[row * self.dimen + column][1] = "red"
+                tempNumRows+=1
 
     def handlePieceClick(self, event):
         print("Handling", self.turn, "click")
@@ -158,7 +167,7 @@ class Board:
                     self.turn = "red"
                 else:
                     self.turn = "green"
-                
+
 
     def generateLegalMoves(self, x, y):
         legalMoves = []
@@ -201,4 +210,4 @@ class Board:
             return False
         else:
             return True
-board = Board(10)
+board = Board(16)
