@@ -50,14 +50,25 @@ class Board:
                 self.listBoard[((row-1) * self.dimen) + column][0] = button
                 self.listBoard[((row-1) * self.dimen) + column][1] = "empty"
 
-        self.generateBoard(19)
+        self.setPieces(19)
         self.root.mainloop()
 
+# @brief    The is the default method that is attached to a square
+#
+# @details  When the board is created and all the squares are just blank grey squares,
+#           this method is set as the event that is called when it is clicked.
+#
+# @param[in]    event
+#               The event object after a click has occurred containing the Button widget
+#                   of the button that was just clicked
     def handleClick(self, event):
         xy = event.widget.text.split(",")
         x = int(xy[0])
         y = int(xy[1])
 
+        #   If there was a valid piece that was clicked one click before this,
+        #       we are assuming the piece want's to be moved.  So we check if
+        #       it legal and send it off for the piece to be moves.
         if self.buttonJustClicked is not None:
             oldxy = self.buttonJustClicked.text.split(",")
             oldx = int(oldxy[0])
@@ -78,13 +89,19 @@ class Board:
         #self.handleGreenClick(event)
         print(event.widget.text)
 
-
-
-    def generateBoard(self, numPieces):
+# @brief    sets all the pieces on the board
+#
+# @details  this will work for any number of pieces given that you specify how many row
+#               some number of pieces produces.  If this needed to be completely portable
+#               there could be some math added but that is unnecessary for our application
+#
+# @param[in]    numPieces
+#               - an integer containing the number of pieces that each team should have
+    def setPieces(self, numPieces):
 
         self.numPieces = numPieces
         if(numPieces == 19):
-            numRows = 7
+            numRows = 5
 
         #   Set the green pieces
         for row in range(numRows):
@@ -100,7 +117,6 @@ class Board:
                     self.listBoard[row * self.dimen + column][0].bind("<Button-1>", self.handlePieceClick)
                     self.listBoard[row * self.dimen + column][0].config(image=self.dark_green)
                     self.listBoard[row * self.dimen + column][1] = "green"
-
 
         #   Set the red pieces
         tempNumRows = self.dimen - numRows + 1
@@ -121,10 +137,18 @@ class Board:
                     self.listBoard[row * self.dimen + column][1] = "red"
                 tempNumRows+=1
 
-
+# @brief    checks the current board to see if either team has won
+#
+# @details  converted from the code for setting the pieces so if another piece configuration was added
+#               the support would also have to be added here
+#
+# @param[out]   string
+#               "red" if red won    "green" if green won    "none" if neither team won
+#
+#
     def isWin(self):
         if (self.numPieces == 19):
-            numRows = 7
+            numRows = 5
 
         #   Check to see if red has won
         winner = True
@@ -162,37 +186,46 @@ class Board:
                 tempNumRows += 1
             if not winner:
                 break
-                
+
         if winner:
             return "green"
         else:
             return "none"
 
 
-
+# @brief    the method attached to a tile containing a piece
+#
+# @details  When setting the pieces this method is set as the event listener for each piece
+#           whether it is green or red.  There is functionality built in to handle turn taking,
+#           and security to make sure you can't set a piece on another piece
+#
+# @param[in]    event
+#               An Event object containing the Button widget that was just clicked
     def handlePieceClick(self, event):
         print("Handling", self.turn, "click")
         xy = event.widget.text.split(",")
         x = int(xy[0])
         y = int(xy[1])
 
-        #   If it is greens turn and the space just clicked is green
+        #   If the tile just clicked is the correct color for whose turn it is
         if self.listBoard[x * self.dimen + y][1] is self.turn and self.buttonJustClicked is None:
             self.listBoard[x * self.dimen + y][1] = "selected"
             self.listBoard[x * self.dimen + y][0].config(bg = 'blue')
             self.buttonJustClicked = self.listBoard[x * self.dimen + y][0]
             print("Selected a ",self.turn," piece")
-        #   If there already was a selection and we need to move into the new spot
+        #   If there already was a piece selected...
         elif self.buttonJustClicked is not None:
             oldXY = self.buttonJustClicked.text.split(",")
             oldX = int(oldXY[0])
             oldY = int(oldXY[1])
+            #   we have to make sure the space isn't occupied...
             if self.listBoard[x *self.dimen + y][1] is not "empty":
                 print("There is already a piece there")
                 #   Unselecting the button
                 self.listBoard[oldX * self.dimen + oldY][0].config(bg = 'white')
                 self.listBoard[oldX * self.dimen + oldY][1] = self.turn
                 self.buttonJustClicked = None
+            #   and if it isn't we can go ahead and make the move
             else:
                 print("handling making teh selection")
                 #   Getting rid of old tile
@@ -201,24 +234,35 @@ class Board:
                 self.listBoard[oldX * self.dimen + oldY][0].config(image = self.empty, bg = 'white')
                 self.listBoard[oldX * self.dimen + oldY][0].bind("<Button-1>", self.handleClick)
 
-                #   Changind the new square to the green tile
+                #   Changind the new square to the piece
                 if self.turn is "green":
                     self.listBoard[x * self.dimen + y][0].image = self.dark_green
                     self.listBoard[x * self.dimen + y][0].config(image = self.dark_green)
                 else:
                     self.listBoard[x * self.dimen + y][0].image = self.dark_red
                     self.listBoard[x * self.dimen + y][0].config(image=self.dark_red)
+
                 self.listBoard[x * self.dimen + y][0].bind("<Button-1>", self.handlePieceClick)
                 self.listBoard[x * self.dimen + y][1] = self.turn
                 self.buttonJustClicked = None
-
 
                 if self.turn is "green":
                     self.turn = "red"
                 else:
                     self.turn = "green"
 
-
+# @brief    takes in a coordinate and generates all legal moves
+#
+# @param[in]    x
+#               the x coordinate corresponding to the piece in question
+#
+# @param[in     y
+#               the y coordinate corresponding to the piece in question
+#
+# @param[out]   list
+#               a list containing all legal moves
+#
+# @TODO         Convert to a set so that multiple values are not added
     def generateLegalMoves(self, x, y):
         legalMoves = []
 
@@ -238,9 +282,23 @@ class Board:
         print(legalMoves)
         return legalMoves
 
+# @brief    finds all the possible moves a piece can make using jumps
+#
+# @param[in]    visited
+#               a list containing all the already visited places
+#
+# @param[in]    legalMoves
+#               a list containing all the legal moves found by jumping
+#
+# @param[in]    x
+#               the x coordinate of the current location being looked at
+#
+# @param[in]    y
+#               the y coordinate of teh current location being looked at
+#
+# @TODO         change all data structures to sets to increase lookup speed
     def findJumps(self, visited, legalMoves, x, y):
         visited.append([x,y])
-
 
         for rowOffset in range(-1,2):
             for columnOffset in range (-1,2):
@@ -260,4 +318,7 @@ class Board:
             return False
         else:
             return True
+
+
+
 board = Board(16)
