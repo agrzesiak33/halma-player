@@ -82,6 +82,7 @@ class Board:
 
     def generateBoard(self, numPieces):
 
+        self.numPieces = numPieces
         if(numPieces == 19):
             numRows = 7
 
@@ -119,6 +120,55 @@ class Board:
                     self.listBoard[row * self.dimen + column][0].config(image=self.dark_red)
                     self.listBoard[row * self.dimen + column][1] = "red"
                 tempNumRows+=1
+
+
+    def isWin(self):
+        if (self.numPieces == 19):
+            numRows = 7
+
+        #   Check to see if red has won
+        winner = True
+        for row in range(numRows):
+            if row == 0 or row == 1:
+                for column in range(numRows):
+                    if self.listBoard[row * self.dimen + column][1] is not "red":
+                        winner = False
+                        break
+            else:
+                for column in range(numRows - row + 1):
+                    if self.listBoard[row * self.dimen + column][1] is not "red":
+                        winner = False
+                        break
+            if not winner:
+                break
+        if winner:
+            return "red"
+
+        winner = True
+
+        #   Check to see if green won
+        tempNumRows = self.dimen - numRows + 1
+        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
+            if row == self.dimen - 1 or row == self.dimen - 2:
+                for column in range(self.dimen - numRows, self.dimen):
+                    if self.listBoard[row * self.dimen + column][1] is not "green":
+                        winner = False
+                        break
+            else:
+                for column in range(tempNumRows, self.dimen):
+                    if self.listBoard[row * self.dimen + column][1] is not "green":
+                        winner = False
+                        break
+                tempNumRows += 1
+            if not winner:
+                break
+                
+        if winner:
+            return "green"
+        else:
+            return "none"
+
+
 
     def handlePieceClick(self, event):
         print("Handling", self.turn, "click")
