@@ -1,8 +1,8 @@
 from tkinter import *
 
-class Board:
 
-    def __init__(self, boardDimensions, emptyFunction, occupiedFunction, numPieces = 19):
+class Board:
+    def __init__(self, boardDimensions, emptyFunction, occupiedFunction, numPieces=19):
         self.root = Tk()
 
         #   Load various pieces
@@ -11,7 +11,7 @@ class Board:
         self.dark_red = PhotoImage(file="images/dark_red_piece.png")
         self.light_red = PhotoImage(file="images/light_red_piece.png")
         self.empty = PhotoImage(file="images/empty_square.png")
-        self.available = PhotoImage(file = "images/available.png")
+        self.available = PhotoImage(file="images/available.png")
 
         #   The frames that hold all the content for the window
         self.notificationFrame = Frame(self.root, height=50)
@@ -31,7 +31,7 @@ class Board:
         #   Initialize the board to the dimensions specified
         self.listBoard = [[None, ""] for i in range(self.dimen * self.dimen)]
         self.greenPieces = []
-        self.redPieces=[]
+        self.redPieces = []
 
         self.boardFrame.grid(row=1)
         self.boardFrame.config(bg='black')
@@ -48,7 +48,7 @@ class Board:
                 self.listBoard[((row - 1) * self.dimen) + column][1] = "empty"
 
         self.numPieces = numPieces
-        #if (numPieces == 19):
+        # if (numPieces == 19):
         numRows = 2
 
         # Set the green pieces
@@ -88,14 +88,16 @@ class Board:
                     self.listBoard[row * self.dimen + column][1] = "red"
                     self.redPieces.append([row, column])
                 tempNumRows += 1
+
     def clearAvailableSpaces(self):
         for button in self.listBoard:
             if button[1] == "empty":
                 button[0].image = self.empty
-                button[0].config(image = self.empty)
+                button[0].config(image=self.empty)
+
 
 class Halma:
-    def __init__(self, boardSize, numPieces = 19):
+    def __init__(self, boardSize, numPieces=19):
         self.dimen = boardSize
         self.numPieces = numPieces
         self.turn = "green"
@@ -107,8 +109,7 @@ class Halma:
         print(self.generateAllLegalMoves())
         self.board.root.mainloop()
 
-    #def play(self):
-
+        # def play(self):
 
 # @brief    Handles the clicked events where there is no piece on the tile
 #
@@ -130,7 +131,7 @@ class Halma:
             oldxy = self.buttonJustClicked.text.split(",")
             oldx = int(oldxy[0])
             oldy = int(oldxy[1])
-            legalMoves = self.generateLegalMoves(oldx, oldy)
+            legalMoves = self.generateLegalMoves(oldx, oldy, self.board.listBoard)
             self.board.clearAvailableSpaces()
             if [x, y] in legalMoves:
                 print("legal move")
@@ -140,8 +141,6 @@ class Halma:
                 self.board.listBoard[oldx * self.dimen + oldy][1] = self.turn
                 self.board.listBoard[oldx * self.dimen + oldy][0].config(bg='white')
                 self.buttonJustClicked = None
-
-
 
 # @brief    Handles the clicked events where there is a piece on the tile
 #
@@ -165,10 +164,10 @@ class Halma:
             self.board.listBoard[x * self.dimen + y][0].config(bg='blue')
             self.buttonJustClicked = self.board.listBoard[x * self.dimen + y][0]
             #   Get it's available moves and highlight them as available
-            availableMoves = self.generateLegalMoves(x,y)
+            availableMoves = self.generateLegalMoves(x, y, self.board.listBoard)
             for move in availableMoves:
                 self.board.listBoard[move[0] * self.dimen + move[1]][0].image = self.board.available
-                self.board.listBoard[move[0] * self.dimen + move[1]][0].config(image = self.board.available)
+                self.board.listBoard[move[0] * self.dimen + move[1]][0].config(image=self.board.available)
 
             print("Selected a ", self.turn, " piece")
         # If there already was a piece selected...
@@ -199,7 +198,7 @@ class Halma:
                     self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_green)
 
                     self.board.listBoard[oldX * self.dimen + oldY][0].image = self.board.light_green
-                    self.board.listBoard[oldX * self.dimen + oldY][0].config(image = self.board.light_green)
+                    self.board.listBoard[oldX * self.dimen + oldY][0].config(image=self.board.light_green)
                 else:
                     self.board.listBoard[x * self.dimen + y][0].image = self.board.dark_red
                     self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_red)
@@ -216,7 +215,7 @@ class Halma:
                     print(self.isWin())
                     exit()
 
-                #   Remove teh old position from the player piece list and add the new one
+                # Remove teh old position from the player piece list and add the new one
                 #   Also moves teh turn to the other person
                 if self.turn is "green":
                     self.board.greenPieces.remove([oldX, oldY])
@@ -237,30 +236,33 @@ class Halma:
 #
 # @param[out]   list
 #               a list containing all legal moves
-#
-# @TODO         Convert to a set so that multiple values are not added
-    def generateLegalMoves(self, x, y):
+                #
+    def generateLegalMoves(self, x, y, board):
         legalMoves = []
+        append = legalMoves.append
+        dimen = self.dimen
 
         #   Find if the places around it are open
-        for row in range(x-1, x+2):
-            if row >= 0 and row < self.dimen:
-                for column in range(y-1, y+2):
-                    if column >= 0 and column < self.dimen:
-                        #   If sn adjacent space is empty it is obvious we can move there
-                        if self.board.listBoard[row * self.dimen + column][1] == "empty" \
+        for row in range(x - 1, x + 2):
+            if 0 <= row < dimen:
+                for column in range(y - 1, y + 2):
+                    if 0 <= column < dimen:
+                        #   If an adjacent space is empty it is obvious we can move there
+                        if board[row * dimen + column][1] == "empty" \
                                 and [row, column] not in legalMoves:
-                            legalMoves.append([row, column])
+                            append([row, column])
 
-                        #   If there is a piece there, we have to check for jumps
+                        # If there is a piece there, we have to check for jumps
                         else:
-                            self.findJumps([], legalMoves, x,y)
+                            self.findJumps([], legalMoves, board, x, y)
 
         print(legalMoves)
         return legalMoves
 
     def generateAllLegalMoves(self):
         allLegalMoves = []
+        localListBoard = self.board.listBoard
+        append = allLegalMoves.append
 
         if self.turn == "green":
             pieceList = self.board.greenPieces
@@ -268,8 +270,7 @@ class Halma:
             pieceList = self.board.redPieces
 
         for piece in pieceList:
-            pieceMoves = self.generateLegalMoves(piece[0], piece[1])
-            allLegalMoves.append([piece[0], piece[1], pieceMoves])
+            append([piece[0], piece[1], self.generateLegalMoves(piece[0], piece[1], localListBoard)])
         return allLegalMoves
 
 # @brief    finds all the possible moves a piece can make using jumps
@@ -285,27 +286,26 @@ class Halma:
 #
 # @param[in]    y
 #               the y coordinate of teh current location being looked at
-#
-# @TODO         change all data structures to sets to increase lookup speed
-    def findJumps(self, visited, legalMoves, x, y):
-        visited.append([x,y])
+    def findJumps(self, visited, legalMoves, board, x, y):
+        visited.append([x, y])
+        append = legalMoves.append
 
-        for rowOffset in range(-1,2):
-            for columnOffset in range (-1,2):
+        for rowOffset in range(-1, 2):
+            for columnOffset in range(-1, 2):
                 #   If the spot is in bounds and there is a piece to jump over...
-                if self.isInBounds(x+rowOffset, y+columnOffset) and \
-                                self.board.listBoard[(x+rowOffset) * self.dimen + (y+columnOffset)][1] is not "empty":
-                    newX = x + (rowOffset*2)
-                    newY = y + (columnOffset*2)
+                if self.isInBounds(x + rowOffset, y + columnOffset) and \
+                                self.board.listBoard[(x + rowOffset) * self.dimen + (y + columnOffset)][
+                                    1] is not "empty":
+                    newX = x + (rowOffset + rowOffset)
+                    newY = y + (columnOffset + columnOffset)
                     #   If the spot after the jump is in bounds and isn't already occupied...
                     if self.isInBounds(newX, newY) and self.board.listBoard[newX * self.dimen + newY][1] is "empty" \
                             and [newX, newY] not in visited and [newX, newY] not in legalMoves:
-                        legalMoves.append([newX, newY])
-                        self.findJumps(visited, legalMoves, newX, newY)
+                        append([newX, newY])
+                        self.findJumps(visited, legalMoves, board, newX, newY)
 
-
-    def isInBounds(self, x,y):
-        if x<0 or x>= self.dimen or y<0 or y >=self.dimen:
+    def isInBounds(self, x, y):
+        if x < 0 or x >= self.dimen or y < 0 or y >= self.dimen:
             return False
         else:
             return True
@@ -317,10 +317,8 @@ class Halma:
 #
 # @param[out]   string
 #               "red" if red won    "green" if green won    "none" if neither team won
-#
-#
     def isWin(self):
-        #if (self.numPieces == 19):
+        # if (self.numPieces == 19):
         numRows = 2
 
         #   Check to see if red has won
@@ -364,5 +362,6 @@ class Halma:
             return "green"
         else:
             return "none"
+
 
 halma = Halma(5)
