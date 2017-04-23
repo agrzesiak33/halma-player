@@ -241,16 +241,17 @@ class Halma:
 # @TODO         Convert to a set so that multiple values are not added
     def generateLegalMoves(self, x, y):
         legalMoves = []
+        append = legalMoves.append
 
         #   Find if the places around it are open
         for row in range(x-1, x+2):
             if row >= 0 and row < self.dimen:
                 for column in range(y-1, y+2):
                     if column >= 0 and column < self.dimen:
-                        #   If sn adjacent space is empty it is obvious we can move there
+                        #   If an adjacent space is empty it is obvious we can move there
                         if self.board.listBoard[row * self.dimen + column][1] == "empty" \
                                 and [row, column] not in legalMoves:
-                            legalMoves.append([row, column])
+                            append([row, column])
 
                         #   If there is a piece there, we have to check for jumps
                         else:
@@ -289,6 +290,7 @@ class Halma:
 # @TODO         change all data structures to sets to increase lookup speed
     def findJumps(self, visited, legalMoves, x, y):
         visited.append([x,y])
+        append = legalMoves.append
 
         for rowOffset in range(-1,2):
             for columnOffset in range (-1,2):
@@ -300,7 +302,7 @@ class Halma:
                     #   If the spot after the jump is in bounds and isn't already occupied...
                     if self.isInBounds(newX, newY) and self.board.listBoard[newX * self.dimen + newY][1] is "empty" \
                             and [newX, newY] not in visited and [newX, newY] not in legalMoves:
-                        legalMoves.append([newX, newY])
+                        append([newX, newY])
                         self.findJumps(visited, legalMoves, newX, newY)
 
 
