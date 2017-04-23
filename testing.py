@@ -111,14 +111,14 @@ class Halma:
 
         # def play(self):
 
-    # @brief    Handles the clicked events where there is no piece on the tile
-    #
-    # @details  When the board is created and all the squares are just blank grey squares,
-    #           this method is set as the event that is called when it is clicked.
-    #
-    # @param[in]    event
-    #               The event object after a click has occurred containing the Button widget
-    #                   of the button that was just clicked
+# @brief    Handles the clicked events where there is no piece on the tile
+#
+# @details  When the board is created and all the squares are just blank grey squares,
+#           this method is set as the event that is called when it is clicked.
+#
+# @param[in]    event
+#               The event object after a click has occurred containing the Button widget
+#                   of the button that was just clicked
     def emptyButton(self, event):
         xy = event.widget.text.split(",")
         x = int(xy[0])
@@ -226,16 +226,16 @@ class Halma:
                     self.board.redPieces.append([x, y])
                     self.turn = "green"
 
-                # @brief    takes in a coordinate and generates all legal moves
-                #
-                # @param[in]    x
-                #               the x coordinate corresponding to the piece in question
-                #
-                # @param[in     y
-                #               the y coordinate corresponding to the piece in question
-                #
-                # @param[out]   list
-                #               a list containing all legal moves
+# @brief    takes in a coordinate and generates all legal moves
+#
+# @param[in]    x
+#               the x coordinate corresponding to the piece in question
+#
+# @param[in     y
+#               the y coordinate corresponding to the piece in question
+#
+# @param[out]   list
+#               a list containing all legal moves
                 #
     def generateLegalMoves(self, x, y, board):
         legalMoves = []
@@ -273,20 +273,19 @@ class Halma:
             append([piece[0], piece[1], self.generateLegalMoves(piece[0], piece[1], localListBoard)])
         return allLegalMoves
 
-    # @brief    finds all the possible moves a piece can make using jumps
-    #
-    # @param[in]    visited
-    #               a list containing all the already visited places
-    #
-    # @param[in]    legalMoves
-    #               a list containing all the legal moves found by jumping
-    #
-    # @param[in]    x
-    #               the x coordinate of the current location being looked at
-    #
-    # @param[in]    y
-    #               the y coordinate of teh current location being looked at
-    #
+# @brief    finds all the possible moves a piece can make using jumps
+#
+# @param[in]    visited
+#               a list containing all the already visited places
+#
+# @param[in]    legalMoves
+#               a list containing all the legal moves found by jumping
+#
+# @param[in]    x
+#               the x coordinate of the current location being looked at
+#
+# @param[in]    y
+#               the y coordinate of teh current location being looked at
     def findJumps(self, visited, legalMoves, board, x, y):
         visited.append([x, y])
         append = legalMoves.append
@@ -311,16 +310,13 @@ class Halma:
         else:
             return True
 
-        # @brief    checks the current board to see if either team has won
-        #
-        # @details  converted from the code for setting the pieces so if another piece configuration was added
-        #               the support would also have to be added here
-        #
-        # @param[out]   string
-        #               "red" if red won    "green" if green won    "none" if neither team won
-        #
-        #
-
+# @brief    checks the current board to see if either team has won
+#
+# @details  converted from the code for setting the pieces so if another piece configuration was added
+#               the support would also have to be added here
+#
+# @param[out]   string
+#               "red" if red won    "green" if green won    "none" if neither team won
     def isWin(self):
         # if (self.numPieces == 19):
         numRows = 2
