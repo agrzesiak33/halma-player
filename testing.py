@@ -129,17 +129,66 @@ class Halma:
         #       it legal and send it off for the piece to be moves.
         if self.buttonJustClicked is not None:
             oldxy = self.buttonJustClicked.text.split(",")
-            oldx = int(oldxy[0])
-            oldy = int(oldxy[1])
-            legalMoves = self.generateLegalMoves(oldx, oldy, self.board.listBoard)
+            oldX = int(oldxy[0])
+            oldY = int(oldxy[1])
+            legalMoves = self.generateLegalMoves(oldX, oldY, self.board.listBoard)
             self.board.clearAvailableSpaces()
             if [x, y] in legalMoves:
                 print("legal move")
-                self.occupiedButton(event)
+                #   we have to make sure the space isn't occupied...
+                if self.board.listBoard[x * self.dimen + y][1] is not "empty":
+                    print("There is already a piece there")
+                    #   Unselecting the button and clear the available markers
+                    self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
+                    self.board.listBoard[oldX * self.dimen + oldY][1] = self.turn
+                    self.buttonJustClicked = None
+                    self.board.clearAvailableSpaces()
+                # and if it isn't we can go ahead and make the move
+                else:
+                    print("handling making teh selection")
+                    #   Getting rid of old tile
+                    self.board.listBoard[oldX * self.dimen + oldY][1] = "empty"
+                    self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
+                    self.board.listBoard[oldX * self.dimen + oldY][0].bind("<Button-1>", self.emptyButton)
+
+                    #   Changing the new square to the piece
+                    #   Also adds a marker to show where the piece came from
+                    if self.turn is "green":
+                        self.board.listBoard[x * self.dimen + y][0].image = self.board.dark_green
+                        self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_green)
+
+                        self.board.listBoard[oldX * self.dimen + oldY][0].image = self.board.light_green
+                        self.board.listBoard[oldX * self.dimen + oldY][0].config(image=self.board.light_green)
+                    else:
+                        self.board.listBoard[x * self.dimen + y][0].image = self.board.dark_red
+                        self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_red)
+
+                        self.board.listBoard[oldX * self.dimen + oldY][0].image = self.board.light_red
+                        self.board.listBoard[oldX * self.dimen + oldY][0].config(image=self.board.light_red)
+
+                    self.board.listBoard[x * self.dimen + y][0].bind("<Button-1>", self.occupiedButton)
+                    self.board.listBoard[x * self.dimen + y][1] = self.turn
+                    self.buttonJustClicked = None
+
+                    #   If we are here a valid move just happened and now we check to see if anyone won.
+                    if self.isWin() is not "none":
+                        print(self.isWin())
+                        exit()
+
+                    # Remove teh old position from the player piece list and add the new one
+                    #   Also moves teh turn to the other person
+                    if self.turn is "green":
+                        self.board.greenPieces.remove([oldX, oldY])
+                        self.board.greenPieces.append([x, y])
+                        self.turn = "red"
+                    else:
+                        self.board.redPieces.remove([oldX, oldY])
+                        self.board.redPieces.append([x, y])
+                        self.turn = "green"
             else:
                 print("illegal move")
-                self.board.listBoard[oldx * self.dimen + oldy][1] = self.turn
-                self.board.listBoard[oldx * self.dimen + oldy][0].config(bg='white')
+                self.board.listBoard[oldX * self.dimen + oldY][1] = self.turn
+                self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
                 self.buttonJustClicked = None
 
 # @brief    Handles the clicked events where there is a piece on the tile
@@ -170,61 +219,14 @@ class Halma:
                 self.board.listBoard[move[0] * self.dimen + move[1]][0].config(image=self.board.available)
 
             print("Selected a ", self.turn, " piece")
-        # If there already was a piece selected...
-        elif self.buttonJustClicked is not None:
-            oldXY = self.buttonJustClicked.text.split(",")
-            oldX = int(oldXY[0])
-            oldY = int(oldXY[1])
-            #   we have to make sure the space isn't occupied...
-            if self.board.listBoard[x * self.dimen + y][1] is not "empty":
-                print("There is already a piece there")
-                #   Unselecting the button and clear the available markers
-                self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
-                self.board.listBoard[oldX * self.dimen + oldY][1] = self.turn
-                self.buttonJustClicked = None
-                self.board.clearAvailableSpaces()
-            # and if it isn't we can go ahead and make the move
-            else:
-                print("handling making teh selection")
-                #   Getting rid of old tile
-                self.board.listBoard[oldX * self.dimen + oldY][1] = "empty"
-                self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
-                self.board.listBoard[oldX * self.dimen + oldY][0].bind("<Button-1>", self.emptyButton)
-
-                #   Changing the new square to the piece
-                #   Also adds a marker to show where the piece came from
-                if self.turn is "green":
-                    self.board.listBoard[x * self.dimen + y][0].image = self.board.dark_green
-                    self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_green)
-
-                    self.board.listBoard[oldX * self.dimen + oldY][0].image = self.board.light_green
-                    self.board.listBoard[oldX * self.dimen + oldY][0].config(image=self.board.light_green)
-                else:
-                    self.board.listBoard[x * self.dimen + y][0].image = self.board.dark_red
-                    self.board.listBoard[x * self.dimen + y][0].config(image=self.board.dark_red)
-
-                    self.board.listBoard[oldX * self.dimen + oldY][0].image = self.board.light_red
-                    self.board.listBoard[oldX * self.dimen + oldY][0].config(image=self.board.light_red)
-
-                self.board.listBoard[x * self.dimen + y][0].bind("<Button-1>", self.occupiedButton)
-                self.board.listBoard[x * self.dimen + y][1] = self.turn
-                self.buttonJustClicked = None
-
-                #   If we are here a valid move just happened and now we check to see if anyone won.
-                if self.isWin() is not "none":
-                    print(self.isWin())
-                    exit()
-
-                # Remove teh old position from the player piece list and add the new one
-                #   Also moves teh turn to the other person
-                if self.turn is "green":
-                    self.board.greenPieces.remove([oldX, oldY])
-                    self.board.greenPieces.append([x, y])
-                    self.turn = "red"
-                else:
-                    self.board.redPieces.remove([oldX, oldY])
-                    self.board.redPieces.append([x, y])
-                    self.turn = "green"
+        #   If either the tile is of teh wrong color
+        #   Or the same piece that was selected one click before is clicked again
+        #   Unhighlight the board and clear the variable holding the selected button
+        else:
+            self.board.clearAvailableSpaces()
+            self.board.listBoard[x * self.dimen + y][0].config( bg='white')
+            self.board.listBoard[x * self.dimen + y][1] = self.turn
+            self.buttonJustClicked = None
 
 # @brief    takes in a coordinate and generates all legal moves
 #
@@ -236,7 +238,6 @@ class Halma:
 #
 # @param[out]   list
 #               a list containing all legal moves
-                #
     def generateLegalMoves(self, x, y, board):
         legalMoves = []
         append = legalMoves.append
