@@ -20,9 +20,7 @@ class Board:
         self.dimen = boardDimensions
 
         #   Set the notification bar to welcome the players
-        var = StringVar()
-        self.notification = Label(self.notificationFrame, textvariable=var)
-        var.set("Hello welcome to Halma")
+        self.notification = Label(self.notificationFrame, text="Welcome to Halma")
         self.notification.pack()
         self.notificationFrame.grid(row=0)
 
@@ -107,9 +105,15 @@ class Halma:
         self.buttonJustClicked = None
 
         print(self.generateAllLegalMoves())
-        self.board.root.mainloop()
+        # self.board.root.mainloop()
 
-        # def play(self):
+    def play(self, playerColor):
+
+        #   Make the color of the player
+
+        while True:
+            self.board.root.update_idletasks()
+            self.board.root.update()
 
 # @brief    Handles the clicked events where there is no piece on the tile
 #
@@ -138,7 +142,7 @@ class Halma:
                 #   we have to make sure the space isn't occupied...
                 if self.board.listBoard[x * self.dimen + y][1] is not "empty":
                     print("There is already a piece there")
-                    #   Unselecting the button and clear the available markers
+                    #   Deselecting the button and clear the available markers
                     self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
                     self.board.listBoard[oldX * self.dimen + oldY][1] = self.turn
                     self.buttonJustClicked = None
@@ -173,6 +177,9 @@ class Halma:
                     #   If we are here a valid move just happened and now we check to see if anyone won.
                     if self.isWin() is not "none":
                         print(self.isWin())
+                        self.board.notification['text'] = "You won!"
+                        self.board.notification.config(text=self.isWin() + " won!")
+                        self.board.notification.pack()
                         exit()
 
                     # Remove teh old position from the player piece list and add the new one
@@ -219,12 +226,12 @@ class Halma:
                 self.board.listBoard[move[0] * self.dimen + move[1]][0].config(image=self.board.available)
 
             print("Selected a ", self.turn, " piece")
-        #   If either the tile is of teh wrong color
+        # If either the tile is of teh wrong color
         #   Or the same piece that was selected one click before is clicked again
         #   Unhighlight the board and clear the variable holding the selected button
         else:
             self.board.clearAvailableSpaces()
-            self.board.listBoard[x * self.dimen + y][0].config( bg='white')
+            self.board.listBoard[x * self.dimen + y][0].config(bg='white')
             self.board.listBoard[x * self.dimen + y][1] = self.turn
             self.buttonJustClicked = None
 
@@ -318,6 +325,7 @@ class Halma:
 #
 # @param[out]   string
 #               "red" if red won    "green" if green won    "none" if neither team won
+# @TODO     Make this function so that it takes a board that is passed in
     def isWin(self):
         # if (self.numPieces == 19):
         numRows = 2
@@ -338,7 +346,7 @@ class Halma:
             if not winner:
                 break
         if winner:
-            return "red"
+            return "Red"
 
         winner = True
 
@@ -360,9 +368,10 @@ class Halma:
                 break
 
         if winner:
-            return "green"
+            return "Green"
         else:
             return "none"
 
 
 halma = Halma(5)
+halma.play("green")
