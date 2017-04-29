@@ -104,7 +104,7 @@ class Halma:
 
         self.buttonJustClicked = None
 
-        print(self.generateAllLegalMoves())
+        print(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
     def play(self, playerColor):
