@@ -198,7 +198,7 @@ class Halma:
                 self.board.listBoard[oldX * self.dimen + oldY][0].config(bg='white')
                 self.buttonJustClicked = None
 
-# @brief    Handles the clicked events where there is a piece on the tile
+# @brief    Handles the clicked events where there is a piece on the tile 
 #
 #
 # @details  When setting the pieces this method is set as the event listener for each piece
