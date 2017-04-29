@@ -381,6 +381,125 @@ class Halma:
         else:
             return "none"
 
+# @brief    Looks over the board and using MiniMax search with aplha beta pruning,
+#               returns the best move within a given time.
+#
+# @param[in]    time
+#               the amount of time we are allowed
+#
+# @param[in]    turn
+#               an integer corresponding to whose turn it is
+#               1 for green     2 for red
+#
+# @param[out]   a list containing the
+#
+    def findNextMove(self, time, turn):
+        #   Convert the inefficient representation of the board into a better one to pass around
+        board = self.board.listBoard
+        currentMax = []
+        if turn is 1:
+            opposingTurn = 2
+        else:
+            opposingTurn = 1
+        for piece in range(self.dimen):
+            if board[piece] is turn:
+                moveMin = self.Min(board, opposingTurn, turn, 5, [int(piece/self.dimen), piece % self.dimen])
+                if moveMin[1] > currentMax[1]:
+                    currentMax = moveMin
+
+        return currentMax[0]
+
+
+
+# @brief    determines the absolute best move possible
+#
+# @param[in]    board
+#               a dictionary representation of the board
+#
+# @paran[in]    turn
+#               an interger corresponding to whose turn it is as this level
+#               1 for green     2 for red
+#
+# @param[in]    opposingTurn
+#               an integer corresponding to whose turn it will be next turn
+#
+# @paran[in]    depth
+#               the current remaining iterations
+#
+# @param[in]    path
+#               a list containing the path so far
+#
+# @param[out]   a list containing the path so far as well as the goodness of this state
+#               [ path : list, goodness : integer]
+#               path is of the form:  [[startX, startY], [moveX, moveY],...]
+#
+#
+    def Max(self, board, turn, opposingTurn, depth, path):
+        if depth <= 0:
+            #   Get the goodness of the current board adn return it along with the path
+            return [path,0]
+        else:
+            localPath = path
+            localBoard = board
+            currentMax = 0
+            allMovesForOnePiece = self.generateLegalMoves(path[-1][0], path[-1][1], board)
+            for move in allMovesForOnePiece:
+                localPath.append(move)
+                #   Move the space on the localBoard
+                localBoard[path[-1][0] * self.dimen + path[-1][1]] = 0
+                localBoard[move[0] * self.dimen + move[1]] = turn
+                #   Calculate one of the min values coming back and reset variables
+                moveMin = self.Min(localBoard, opposingTurn, turn, depth - 1, localPath)
+                if moveMin[1] > currentMax[1]:
+                    currentMax = moveMin
+                localPath = path
+                localBoard = board
+            return currentMax
+
+
+
+# @brief    determines the absolute worst move possible
+#
+# @param[in]    board
+#               a dictionary representation of the board
+#
+# @paran[in]    turn
+#               an interger corresponding to whose turn it is as the max level
+#               1 for green     2 for red
+#
+# @param[in]    opposingTurn
+#               an integer corresponding to whose turn it will be next turn
+#
+# @paran[in]    depth
+#               the current remaining iterations
+#
+# @param[in]    path
+#               a list containing the path so far
+#
+# @param[out]   a list containing the path so far as well as the goodness of this state
+#               [ path : list, goodness : integer]
+#               path is of the form:  [[startX, startY], [moveX, moveY],...]
+    def Min(self, board, turn, opposingTurn, depth, path):
+        if depth <= 0:
+            #   Get the goodness of the current board adn return it along with the path
+            return [path, 0]
+        else:
+            localPath = path
+            localBoard = board
+            currentMin = 0
+            allMovesForOnePiece = self.generateLegalMoves(path[-1][0], path[-1][1], board)
+            for move in allMovesForOnePiece:
+                localPath.append(move)
+                #   Move the space on the localBoard
+                localBoard[path[-1][0] * self.dimen + path[-1][1]] = 0
+                localBoard[move[0] * self.dimen + move[1]] = turn
+                #   Calculate one of the min values coming back and reset variables
+                moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+                if moveMin[1] < currentMin[1]:
+                    currentMin = moveMin
+                localPath = path
+                localBoard = board
+            return currentMin
 
 halma = Halma(5)
 halma.play("green")
