@@ -98,7 +98,23 @@ class Board:
 
 
 class Halma:
-    def __init__(self, boardSize, numPieces=19):
+
+# @brief    Sets up the board and other global variables
+#
+# @param[in]    playerConfig
+#               a list containing two lists with information about whether each player is human or computer
+#               playerConfig is of type: [[color : int, human/computer : int],...]
+#               color:      1 for green     2 for red
+#               human/AI:   1 for human     2 for computer
+#
+# @param[in]    boardSize
+#               an optional argument with teh size of the board
+#
+# @param[in]    numPieces
+#               an optional argument with the number of pieces for each team.  This needs to be a certain number
+#                   or else the piece generation function will fail.  19 is standard for Halma but there will be
+#                   support for more piece configurations in teh future
+    def __init__(self, playerConfig, boardSize = 15, numPieces=19):
         self.dimen = boardSize
         self.numPieces = numPieces
         self.turn = 1
@@ -107,7 +123,13 @@ class Halma:
 
         self.buttonJustClicked = None
 
-        print(self.generateAllLegalMoves(self.turn, self.board.allButtons))
+        if playerConfig[0][1] is 2 or playerConfig[1][1] is 2:
+            if playerConfig[0][1] is 2:
+                self.computer = playerConfig[0][0]
+            elif playerConfig[1][1] is 2:
+                self.computer = playerConfig[1][0]
+
+        print(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
     def play(self, playerColor):
@@ -117,6 +139,20 @@ class Halma:
         while True:
             self.board.root.update_idletasks()
             self.board.root.update()
+
+            try:
+                self.computer
+                #   If it is the computers turn we have to find his move and make it
+                if self.computer is self.turn:
+                    pathToBestBoard = self.findNextMove(0, self.turn)
+                    pieceToMove = pathToBestBoard[0]
+                    spaceToMoveTo = pathToBestBoard[1]
+
+                    self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[0], spaceToMoveTo[1])
+
+            except AttributeError:
+                pass
+
 
 # @brief    Handles the clicked events where there is no piece on the tile
 #
