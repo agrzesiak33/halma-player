@@ -501,33 +501,50 @@ class Halma:
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
-#
-#
     def Max(self, board, turn, opposingTurn, depth, path):
         if depth <= 0:
-            #   Get the goodness of the current board adn return it along with the path
-            return [path,0]
+            #   TODO    call the to be made eval function with turn is the turn parameter in the function
+            #       we would be calling eval with turn in this case because if we are out of depth,
+            #           that means that Min (red) is calling this function and min (red) selects the worst
+            #           possible move for green and not necessarily the one that helps red the most
+            return [path, 0]
         else:
             localPath = path
             localBoard = board
-            currentMax = 0
-            allMovesForOnePiece = self.generateLegalMoves(path[-1][0], path[-1][1], board)
-            for move in allMovesForOnePiece:
-                localPath.append(move)
-                #   Move the space on the localBoard
-                localBoard[path[-1][0] * self.dimen + path[-1][1]] = 0
-                localBoard[move[0] * self.dimen + move[1]] = turn
-                #   Calculate one of the min values coming back and reset variables
-                moveMin = self.Min(localBoard, opposingTurn, turn, depth - 1, localPath)
-                if moveMin[1] > currentMax[1]:
-                    currentMax = moveMin
-                localPath = path
-                localBoard = board
-            return currentMax
+            currentMax = [[], -1]    # [0] is the path of the best score : list     [1] is the score itself : int
+            #   All moves is in the form: [[oldX, oldY, [[possX, possY],...],...]
+            allMoves = self.generateAllLegalMoves(turn, board)
+            for moveSet in allMoves:
+                for move in moveSet[2]:
+                    #   Set old space to empty
+                    localBoard[moveSet[0 * self.dimen + moveSet[1]]] = 0
+
+                    #   Move the space on the localBoard
+                    localBoard[move[0] * self.dimen + move[1]] = turn
+
+                    localPath.append(move)
+
+                    #   Calculate one of the min values coming back and reset variables
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+
+                    if moveMin[1] < currentMax[1]:
+                        currentMax = moveMin
+
+                    localPath = path
+                    localBoard = board
+
+            #   We have to take care of the case where there are no legal moves for the player which
+            #       would mean he is the winner and this needs to return the maximum possible score.
+            #   TODO    replace these placeholder strings with either an array with passed in path and highest score
+            #   TODO    or the score we found above from calling the min function
+            if currentMax < 0:
+                return "The max score"
+            else:
+                return "the score that we found from calling min"
 
 
 
-# @brief    determines the absolute worst move possible
+# @brief    determines the absolute worst move possible for Max
 #
 # @param[in]    board
 #               a dictionary representation of the board
@@ -550,25 +567,42 @@ class Halma:
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
     def Min(self, board, turn, opposingTurn, depth, path):
         if depth <= 0:
-            #   Get the goodness of the current board adn return it along with the path
+            #   TODO     call the to be made eval function with opposingTurn is the turn parameter in the function
+            #       we would be calling eval with opposingTurn in this case because if we are out of depth,
+            #           that means that Max (green) is calling this function and so we have to return the board
+            #           evaluation with respect green.
             return [path, 0]
         else:
             localPath = path
             localBoard = board
-            currentMin = 0
-            allMovesForOnePiece = self.generateLegalMoves(path[-1][0], path[-1][1], board)
-            for move in allMovesForOnePiece:
-                localPath.append(move)
-                #   Move the space on the localBoard
-                localBoard[path[-1][0] * self.dimen + path[-1][1]] = 0
-                localBoard[move[0] * self.dimen + move[1]] = turn
-                #   Calculate one of the min values coming back and reset variables
-                moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
-                if moveMin[1] < currentMin[1]:
-                    currentMin = moveMin
-                localPath = path
-                localBoard = board
-            return currentMin
+            currentMin = [[], 99999999999]  # [0] is the path of the best score : list     [1] is the score itself : int
+            #   allMoves is in the form: [[oldX, oldY, [[possX, possY],...],...]
+            allMoves = self.generateAllLegalMoves(turn, board)
+            for moveSet in allMoves:
+                for move in moveSet[2]:
+                    #   Set old space to empty
+                    localBoard[moveSet[0 * self.dimen + moveSet[1]]] = 0
 
-halma = Halma(5)
+                    #   Move the space on the localBoard
+                    localBoard[move[0] * self.dimen + move[1]] = turn
+
+                    localPath.append(move)
+
+                    #   Calculate one of the min values coming back and reset variables
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+
+                    if moveMin[1] < currentMin[1]:
+                        currentMin = moveMin
+
+                    localPath = path
+                    localBoard = board
+
+            #   TODO    replace these placeholder strings with either an array with passed in path and highest score
+            #   TODO    or the score we found above from calling the min function
+            if currentMin < 0:
+                return "The lowest possible score"
+            else:
+                return "the score that we found from calling max"
+
+halma = Halma([[1,1],[2,1]], 4)
 halma.play("green")
