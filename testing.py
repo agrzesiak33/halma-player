@@ -192,11 +192,6 @@ class Halma:
 
                     self.movePiece(oldX, oldY, x, y, self.turn)
 
-                    #   moves teh turn to the other person
-                    if self.turn is 1:
-                        self.turn = 2
-                    else:
-                        self.turn = 1
             else:
                 print("illegal move")
                 self.board.listBoard[oldX * self.dimen + oldY] = self.turn
@@ -269,10 +264,16 @@ class Halma:
 
         print(self.board.listBoard)
         #   If we are here a valid move just happened and now we check to see if anyone won.
-        if self.isWin() is not "none":
-            print(self.isWin())
+        if self.isWin(self.board.listBoard) is not "none":
+            print(self.isWin(self.board.listBoard))
             self.board.notification.config(text=self.isWin() + " won!")
             self.board.notification.pack()
+
+        #   moves the turn to the other person
+        if self.turn is 1:
+            self.turn = 2
+        else:
+            self.turn = 1
 
 
 
@@ -320,6 +321,9 @@ class Halma:
 #
 # @param[in]    board
 #               a dictionary containing the
+#
+# @param[out]   a list containing all possible moves
+#               has the format [[pieceX, pieceY,[[possX, possY], [possX, possY]...]]...]
     def generateAllLegalMoves(self, turn, board):
         allLegalMoves = []
         append = allLegalMoves.append
@@ -373,8 +377,7 @@ class Halma:
 #
 # @param[out]   string
 #               "red" if red won    "green" if green won    "none" if neither team won
-# @TODO     Make this function so that it takes a board that is passed in
-    def isWin(self):
+    def isWin(self, board):
         # if (self.numPieces == 19):
         numRows = 2
 
@@ -383,12 +386,12 @@ class Halma:
         for row in range(numRows):
             if row == 0 or row == 1:
                 for column in range(numRows):
-                    if self.board.listBoard[row * self.dimen + column] is not 2:
+                    if board[row * self.dimen + column] is not 2:
                         winner = False
                         break
             else:
                 for column in range(numRows - row + 1):
-                    if self.board.listBoard[row * self.dimen + column] is not 2:
+                    if board[row * self.dimen + column] is not 2:
                         winner = False
                         break
             if not winner:
