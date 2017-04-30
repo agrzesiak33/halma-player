@@ -41,7 +41,7 @@ class Board:
             for column in range(self.dimen):
                 button = Button(self.boardFrame)
                 button.grid(row=row, column=column)
-                button.text = str(row - 1) + "," + str(column)  # The text field contains the x y coordinates
+                button.text = str(row - 1) + "," + str(column) + ", 0"  # The text field contains the x y coordinates
                 button.config(image=self.empty, width="100", height="100")
                 button.bind("<Button-1>", emptyFunction)
                 self.allButtons.append(button)
@@ -58,15 +58,16 @@ class Board:
                     self.allButtons[row * self.dimen + column].image = self.dark_green
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                    #   Sets greens starting zone as reds safe zone.
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
-                    self.greenPieces.append([row, column])
             else:
                 for column in range(numRows - row + 1):
                     self.allButtons[row * self.dimen + column].image = self.dark_green
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
-                    self.greenPieces.append([row, column])
 
         # Set the red pieces
         tempNumRows = self.dimen - numRows + 1
@@ -77,17 +78,19 @@ class Board:
                     self.allButtons[row * self.dimen + column].image = self.dark_red
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
-                    self.redPieces.append([row, column])
             else:
                 print(tempNumRows)
                 for column in range(tempNumRows, self.dimen):
                     self.allButtons[row * self.dimen + column].image = self.dark_red
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
-                    self.redPieces.append([row, column])
                 tempNumRows += 1
+        for button in self.allButtons:
+            print(button.text)
 
     def clearAvailableSpaces(self):
         for button in self.allButtons:
@@ -98,7 +101,23 @@ class Board:
 
 
 class Halma:
-    def __init__(self, boardSize, numPieces=19):
+
+# @brief    Sets up the board and other global variables
+#
+# @param[in]    playerConfig
+#               a list containing two lists with information about whether each player is human or computer
+#               playerConfig is of type: [[color : int, human/computer : int],...]
+#               color:      1 for green     2 for red
+#               human/AI:   1 for human     2 for computer
+#
+# @param[in]    boardSize
+#               an optional argument with teh size of the board
+#
+# @param[in]    numPieces
+#               an optional argument with the number of pieces for each team.  This needs to be a certain number
+#                   or else the piece generation function will fail.  19 is standard for Halma but there will be
+#                   support for more piece configurations in teh future
+    def __init__(self, playerConfig, boardSize = 15, numPieces=19):
         self.dimen = boardSize
         self.numPieces = numPieces
         self.turn = 1
@@ -107,7 +126,13 @@ class Halma:
 
         self.buttonJustClicked = None
 
-        print(self.generateAllLegalMoves(self.turn, self.board.allButtons))
+        if playerConfig[0][1] is 2 or playerConfig[1][1] is 2:
+            if playerConfig[0][1] is 2:
+                self.computer = playerConfig[0][0]
+            elif playerConfig[1][1] is 2:
+                self.computer = playerConfig[1][0]
+
+        print(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
     def play(self, playerColor):
@@ -117,6 +142,20 @@ class Halma:
         while True:
             self.board.root.update_idletasks()
             self.board.root.update()
+
+            try:
+                self.computer
+                #   If it is the computers turn we have to find his move and make it
+                if self.computer is self.turn:
+                    pathToBestBoard = self.findNextMove(0, self.turn)
+                    pieceToMove = pathToBestBoard[0]
+                    spaceToMoveTo = pathToBestBoard[1]
+
+                    self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[0], spaceToMoveTo[1])
+
+            except AttributeError:
+                pass
+
 
 # @brief    Handles the clicked events where there is no piece on the tile
 #
@@ -156,11 +195,6 @@ class Halma:
 
                     self.movePiece(oldX, oldY, x, y, self.turn)
 
-                    #   moves teh turn to the other person
-                    if self.turn is 1:
-                        self.turn = 2
-                    else:
-                        self.turn = 1
             else:
                 print("illegal move")
                 self.board.listBoard[oldX * self.dimen + oldY] = self.turn
@@ -229,14 +263,19 @@ class Halma:
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
         self.buttonJustClicked = None
-        print("made it to the end of move piece")
 
-        print(self.board.listBoard)
+        #print(self.board.listBoard)
         #   If we are here a valid move just happened and now we check to see if anyone won.
-        if self.isWin() is not "none":
-            print(self.isWin())
-            self.board.notification.config(text=self.isWin() + " won!")
+        if self.isWin(self.board.listBoard) is not "none":
+            print(self.isWin(self.board.listBoard))
+            self.board.notification.config(text=self.isWin(self.board.listBoard) + " won!")
             self.board.notification.pack()
+
+        #   moves the turn to the other person
+        if self.turn is 1:
+            self.turn = 2
+        else:
+            self.turn = 1
 
 
 
@@ -266,14 +305,39 @@ class Halma:
                     if 0 <= column < dimen:
                         #   If an adjacent space is empty it is obvious we can move there
                         if board[row * dimen + column] == 0 and [row, column] not in legalMoves:
-                            append([row, column])
-
+                            #   Checking to make sure that we don't enter our base again
+                            if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] != str(2):
+                                append([row, column])
+                            elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] != str(1):
+                                append([row, column])
                         # If there is a piece there, we have to check for jumps
                         else:
                             self.findJumps([], legalMoves, board, x, y)
 
-        print(legalMoves)
-        return legalMoves
+        #   Per the game instructions, once a piece enters their safe zone it can't leave
+        #   This probably needs to be sped up a ton
+        if self.board.allButtons[x * dimen + y].text[-1] != "0":
+            print(self.board.allButtons[x * dimen + y].text[-1])
+            print("before removals: ")
+            print(legalMoves)
+            if self.board.allButtons[x * dimen + y].text[-1] == str(self.turn):
+                legalEndMove = []
+                for move in legalMoves:
+                    if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
+                        print(move, " works")
+                        legalEndMove.append(move)
+                #print(self.turn, " piece in safe zone")
+
+
+
+
+        try:
+            legalEndMove
+            print(legalEndMove)
+            return legalEndMove
+        except UnboundLocalError:
+            print(legalMoves)
+            return legalMoves
 
 # @brief    Generates all the legal moves on the board given whose turn it is
 #
@@ -284,6 +348,9 @@ class Halma:
 #
 # @param[in]    board
 #               a dictionary containing the
+#
+# @param[out]   a list containing all possible moves
+#               has the format [[pieceX, pieceY,[[possX, possY], [possX, possY]...]]...]
     def generateAllLegalMoves(self, turn, board):
         allLegalMoves = []
         append = allLegalMoves.append
@@ -337,8 +404,7 @@ class Halma:
 #
 # @param[out]   string
 #               "red" if red won    "green" if green won    "none" if neither team won
-# @TODO     Make this function so that it takes a board that is passed in
-    def isWin(self):
+    def isWin(self, board):
         # if (self.numPieces == 19):
         numRows = 2
 
@@ -347,12 +413,12 @@ class Halma:
         for row in range(numRows):
             if row == 0 or row == 1:
                 for column in range(numRows):
-                    if self.board.listBoard[row * self.dimen + column] is not 2:
+                    if board[row * self.dimen + column] is not 2:
                         winner = False
                         break
             else:
                 for column in range(numRows - row + 1):
-                    if self.board.listBoard[row * self.dimen + column] is not 2:
+                    if board[row * self.dimen + column] is not 2:
                         winner = False
                         break
             if not winner:
