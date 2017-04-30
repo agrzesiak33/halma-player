@@ -41,7 +41,7 @@ class Board:
             for column in range(self.dimen):
                 button = Button(self.boardFrame)
                 button.grid(row=row, column=column)
-                button.text = str(row - 1) + "," + str(column)  # The text field contains the x y coordinates
+                button.text = str(row - 1) + "," + str(column) + ", 0"  # The text field contains the x y coordinates
                 button.config(image=self.empty, width="100", height="100")
                 button.bind("<Button-1>", emptyFunction)
                 self.allButtons.append(button)
@@ -58,15 +58,16 @@ class Board:
                     self.allButtons[row * self.dimen + column].image = self.dark_green
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                    #   Sets greens starting zone as reds safe zone.
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
-                    self.greenPieces.append([row, column])
             else:
                 for column in range(numRows - row + 1):
                     self.allButtons[row * self.dimen + column].image = self.dark_green
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
-                    self.greenPieces.append([row, column])
 
         # Set the red pieces
         tempNumRows = self.dimen - numRows + 1
@@ -77,17 +78,19 @@ class Board:
                     self.allButtons[row * self.dimen + column].image = self.dark_red
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
-                    self.redPieces.append([row, column])
             else:
                 print(tempNumRows)
                 for column in range(tempNumRows, self.dimen):
                     self.allButtons[row * self.dimen + column].image = self.dark_red
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
-                    self.redPieces.append([row, column])
                 tempNumRows += 1
+        for button in self.allButtons:
+            print(button.text)
 
     def clearAvailableSpaces(self):
         for button in self.allButtons:
@@ -260,13 +263,12 @@ class Halma:
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
         self.buttonJustClicked = None
-        print("made it to the end of move piece")
 
-        print(self.board.listBoard)
+        #print(self.board.listBoard)
         #   If we are here a valid move just happened and now we check to see if anyone won.
         if self.isWin(self.board.listBoard) is not "none":
             print(self.isWin(self.board.listBoard))
-            self.board.notification.config(text=self.isWin() + " won!")
+            self.board.notification.config(text=self.isWin(self.board.listBoard) + " won!")
             self.board.notification.pack()
 
         #   moves the turn to the other person
@@ -309,8 +311,30 @@ class Halma:
                         else:
                             self.findJumps([], legalMoves, board, x, y)
 
-        print(legalMoves)
-        return legalMoves
+        #   Per the game instructions, once a piece enters their safe zone it can't leave
+        #   This probably needs to be sped up a ton
+        if self.board.allButtons[x * dimen + y].text[-1] != "0":
+            print(self.board.allButtons[x * dimen + y].text[-1])
+            print("before removals: ")
+            print(legalMoves)
+            if self.board.allButtons[x * dimen + y].text[-1] == str(self.turn):
+                legalEndMove = []
+                for move in legalMoves:
+                    if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
+                        print(move, " works")
+                        legalEndMove.append(move)
+                #print(self.turn, " piece in safe zone")
+
+
+
+
+        try:
+            legalEndMove
+            print(legalEndMove)
+            return legalEndMove
+        except UnboundLocalError:
+            print(legalMoves)
+            return legalMoves
 
 # @brief    Generates all the legal moves on the board given whose turn it is
 #
