@@ -501,7 +501,7 @@ class Halma:
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
-    def Max(self, board, turn, opposingTurn, depth, path):
+    def Max(self, board, turn, opposingTurn, depth, path, alpha, beta):
         if depth <= 0:
             #   TODO    call the to be made eval function with turn is the turn parameter in the function
             #       we would be calling eval with turn in this case because if we are out of depth,
@@ -526,6 +526,13 @@ class Halma:
 
                     #   Calculate one of the min values coming back and reset variables
                     moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+
+                    #   Pruning is the found value is larger than the best current value for the minimizer node (beta)
+                    if moveMin[1] >= beta:
+                        return moveMin
+
+                    if moveMin[1] > alpha:
+                        alpha = moveMin[1]
 
                     if moveMin[1] < currentMax[1]:
                         currentMax = moveMin
@@ -565,7 +572,7 @@ class Halma:
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
-    def Min(self, board, turn, opposingTurn, depth, path):
+    def Min(self, board, turn, opposingTurn, depth, path, alpha, beta):
         if depth <= 0:
             #   TODO     call the to be made eval function with opposingTurn is the turn parameter in the function
             #       we would be calling eval with opposingTurn in this case because if we are out of depth,
@@ -590,6 +597,13 @@ class Halma:
 
                     #   Calculate one of the min values coming back and reset variables
                     moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+
+                    #   Pruning if the found value is less than the current best value for the maximizer node (alpha)
+                    if moveMin[1] <= alpha:
+                        return moveMin
+
+                    if moveMin[1] < beta:
+                        beta = moveMin[1]
 
                     if moveMin[1] < currentMin[1]:
                         currentMin = moveMin
