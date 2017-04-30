@@ -305,8 +305,11 @@ class Halma:
                     if 0 <= column < dimen:
                         #   If an adjacent space is empty it is obvious we can move there
                         if board[row * dimen + column] == 0 and [row, column] not in legalMoves:
-                            append([row, column])
-
+                            #   Checking to make sure that we don't enter our base again
+                            if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] != str(2):
+                                append([row, column])
+                            elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] != str(1):
+                                append([row, column])
                         # If there is a piece there, we have to check for jumps
                         else:
                             self.findJumps([], legalMoves, board, x, y)
