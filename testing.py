@@ -1,4 +1,5 @@
 from tkinter import *
+import math
 
 
 class Board:
@@ -326,7 +327,7 @@ class Halma:
                     if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
                         print(move, " works")
                         legalEndMove.append(move)
-                #print(self.turn, " piece in safe zone")
+
 
 
 
@@ -485,18 +486,24 @@ class Halma:
 # @param[in]    board
 #               a dictionary representation of the board
 #
-# @paran[in]    turn
+# @param[in]    turn
 #               an interger corresponding to whose turn it is as this level
 #               1 for green     2 for red
 #
 # @param[in]    opposingTurn
 #               an integer corresponding to whose turn it will be next turn
 #
-# @paran[in]    depth
+# @param[in]    depth
 #               the current remaining iterations
 #
 # @param[in]    path
 #               a list containing the path so far
+#
+# @param[in]    alpha
+#               an integer representing the best value that the maximizer has found in the current path from the root
+#
+# @param[in]    beta
+#               an integer representing the best value that the minimizer has found in teh current path from the root
 #
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
@@ -511,7 +518,7 @@ class Halma:
         else:
             localPath = path
             localBoard = board
-            currentMax = [[], -1]    # [0] is the path of the best score : list     [1] is the score itself : int
+            currentMax = [[], -math.inf]    # [0] is the path of the best score : list     [1] is the score itself : int
             #   All moves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
@@ -525,7 +532,7 @@ class Halma:
                     localPath.append(move)
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta)
 
                     #   Pruning is the found value is larger than the best current value for the minimizer node (beta)
                     if moveMin[1] >= beta:
@@ -544,7 +551,9 @@ class Halma:
             #       would mean he is the winner and this needs to return the maximum possible score.
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
-            if currentMax < 0:
+            if currentMax == -math.inf:
+                #   If this is reached, it means max (green) has no moves to make which means green has won and so
+                #       we signal this with teh highest possible score
                 return "The max score"
             else:
                 return "the score that we found from calling min"
@@ -569,6 +578,12 @@ class Halma:
 # @param[in]    path
 #               a list containing the path so far
 #
+# @param[in]    alpha
+#               an integer representing the best value that the maximizer has found in the current path from the root
+#
+# @param[in]    beta
+#               an integer representing the best value that the minimizer has found in teh current path from the root
+#
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
@@ -582,7 +597,7 @@ class Halma:
         else:
             localPath = path
             localBoard = board
-            currentMin = [[], 99999999999]  # [0] is the path of the best score : list     [1] is the score itself : int
+            currentMin = [[], math.inf]  # [0] is the path of the best score : list    [1] is the score itself : int
             #   allMoves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
@@ -596,7 +611,7 @@ class Halma:
                     localPath.append(move)
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath)
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta)
 
                     #   Pruning if the found value is less than the current best value for the maximizer node (alpha)
                     if moveMin[1] <= alpha:
@@ -613,10 +628,21 @@ class Halma:
 
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
-            if currentMin < 0:
+            if currentMin == math.inf:
+                #   If this is reached, min (red) has no move to make which means they won the game so we have
+                #       signal this by returning the lowest possible score.
                 return "The lowest possible score"
             else:
                 return "the score that we found from calling max"
 
-halma = Halma([[1,1],[2,1]], 4)
-halma.play("green")
+halma = Halma([[1, 1], [2, 1]], 4)
+halma.play()
+
+#   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
+#   TODO    add analytics into minimax to track
+#   TODO    add logic code to highlight the piece that just moved not just where it came from
+#   TODO    make the UI update with "I'm thinking" with a timer with the time remaining
+#   TODO    once someone wins, display the number of moves made and teh final score
+#               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
+#                   the piece to the base
+#   TODO    add a notification that is the humans turn when applicable
