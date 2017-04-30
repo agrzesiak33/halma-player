@@ -639,7 +639,9 @@ halma = Halma([[1, 1], [2, 1]], 4)
 halma.play()
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
-#   TODO    add analytics into minimax to track
+#   TODO    implement a time limit into minimax
+#   TODO    make findNextMove use IDS
+#   TODO    add analytics into minimax
 #   TODO    add logic code to highlight the piece that just moved not just where it came from
 #   TODO    make the UI update with "I'm thinking" with a timer with the time remaining
 #   TODO    once someone wins, display the number of moves made and teh final score
