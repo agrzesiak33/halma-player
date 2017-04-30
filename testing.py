@@ -153,47 +153,13 @@ class Halma:
                 # and if it isn't we can go ahead and make the move
                 else:
                     print("handling making teh selection")
-                    #   Getting rid of old tile
-                    self.board.listBoard[oldX * self.dimen + oldY] = 0
-                    self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
-                    self.board.allButtons[oldX * self.dimen + oldY].bind("<Button-1>", self.emptyButton)
 
-                    #   Changing the new square to the piece
-                    #   Also adds a marker to show where the piece came from
+                    self.movePiece(oldX, oldY, x, y, self.turn)
+
+                    #   moves teh turn to the other person
                     if self.turn is 1:
-                        self.board.allButtons[x * self.dimen + y].image = self.board.dark_green
-                        self.board.allButtons[x * self.dimen + y].config(image=self.board.dark_green)
-
-                        self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
-                        self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
-                    else:
-                        self.board.allButtons[x * self.dimen + y].image = self.board.dark_red
-                        self.board.allButtons[x * self.dimen + y].config(image=self.board.dark_red)
-
-                        self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
-                        self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
-
-                    self.board.allButtons[x * self.dimen + y].bind("<Button-1>", self.occupiedButton)
-                    self.board.listBoard[x * self.dimen + y] = self.turn
-                    self.buttonJustClicked = None
-
-                    #   If we are here a valid move just happened and now we check to see if anyone won.
-                    if self.isWin() is not "none":
-                        print(self.isWin())
-                        self.board.notification['text'] = "You won!"
-                        self.board.notification.config(text=self.isWin() + " won!")
-                        self.board.notification.pack()
-                        exit()
-
-                    # Remove teh old position from the player piece list and add the new one
-                    #   Also moves teh turn to the other person
-                    if self.turn is 1:
-                        self.board.greenPieces.remove([oldX, oldY])
-                        self.board.greenPieces.append([x, y])
                         self.turn = 2
                     else:
-                        self.board.redPieces.remove([oldX, oldY])
-                        self.board.redPieces.append([x, y])
                         self.turn = 1
             else:
                 print("illegal move")
@@ -237,6 +203,43 @@ class Halma:
             self.board.allButtons[x * self.dimen + y].config(bg='white')
             self.board.listBoard[x * self.dimen + y] = self.turn
             self.buttonJustClicked = None
+
+    def movePiece(self, oldX, oldY, newX, newY, turn):
+        print("Moving the piece")
+        #   Getting rid of old tile
+        self.board.listBoard[oldX * self.dimen + oldY] = 0
+        self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
+        self.board.allButtons[oldX * self.dimen + oldY].bind("<Button-1>", self.emptyButton)
+
+        #   Changing the new square to the piece
+        #   Also adds a marker to show where the piece came from
+        if self.turn is 1:
+            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_green
+            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_green)
+
+            self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
+            self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
+        else:
+            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red
+            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red)
+
+            self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
+            self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
+
+        self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
+        self.board.listBoard[newX * self.dimen + newY] = self.turn
+        self.buttonJustClicked = None
+        print("made it to the end of move piece")
+
+        print(self.board.listBoard)
+        #   If we are here a valid move just happened and now we check to see if anyone won.
+        if self.isWin() is not "none":
+            print(self.isWin())
+            self.board.notification.config(text=self.isWin() + " won!")
+            self.board.notification.pack()
+
+
+
 
 # @brief    takes in a coordinate and generates all legal moves
 #
