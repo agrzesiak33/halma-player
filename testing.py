@@ -1,5 +1,6 @@
 from tkinter import *
 import math
+import time
 
 
 class Board:
@@ -471,9 +472,11 @@ class Halma:
             opposingTurn = 2
         else:
             opposingTurn = 1
+
+        endTime = time.perf_counter() + time
         for piece in range(self.dimen):
             if board[piece] is turn:
-                moveMin = self.Min(board, opposingTurn, turn, 5, [int(piece/self.dimen), piece % self.dimen])
+                moveMin = self.Min(board, opposingTurn, turn, 5, [int(piece/self.dimen), piece % self.dimen], endTime)
                 if moveMin[1] > currentMax[1]:
                     currentMax = moveMin
 
@@ -505,10 +508,19 @@ class Halma:
 # @param[in]    beta
 #               an integer representing the best value that the minimizer has found in teh current path from the root
 #
+# @param[in]    endTime
+#               the time in which we have to end searching
+#
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
-    def Max(self, board, turn, opposingTurn, depth, path, alpha, beta):
+    def Max(self, board, turn, opposingTurn, depth, path, alpha, beta, endTime):
+        #   First we make sure we have time to do more searching
+        #   If we are out of time we return something different than usual
+        #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
+        if time.perf_counter() > endTime:
+            return [path, 999999999999, -1]
+
         if depth <= 0:
             #   TODO    call the to be made eval function with turn is the turn parameter in the function
             #       we would be calling eval with turn in this case because if we are out of depth,
@@ -532,7 +544,20 @@ class Halma:
                     localPath.append(move)
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta)
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
+
+                    #   Usually this try will fail but if it doesn't it means we're out of time and we return whatever
+                    #       value we were working on
+                    try:
+                        moveMin[2]
+                        if moveMin[1] > currentMax[1]:
+                            return moveMin
+                        else:
+                            #   We have to make sure that the thing being returned has an index at 2
+                            currentMax.append(-1)
+                            return currentMax
+                    except IndexError:
+                        pass
 
                     #   Pruning is the found value is larger than the best current value for the minimizer node (beta)
                     if moveMin[1] >= beta:
@@ -584,10 +609,20 @@ class Halma:
 # @param[in]    beta
 #               an integer representing the best value that the minimizer has found in teh current path from the root
 #
+# @param[in]    endTime
+#               the time in which we have to end searching
+#
 # @param[out]   a list containing the path so far as well as the goodness of this state
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
-    def Min(self, board, turn, opposingTurn, depth, path, alpha, beta):
+    def Min(self, board, turn, opposingTurn, depth, path, alpha, beta, endTime):
+        #   First we make sure we have time to do more searching
+        #   If we are out of time we return something different than usual
+        #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
+        if time.perf_counter() > endTime:
+            return [path, 999999999999, -1]
+
+
         if depth <= 0:
             #   TODO     call the to be made eval function with opposingTurn is the turn parameter in the function
             #       we would be calling eval with opposingTurn in this case because if we are out of depth,
@@ -611,7 +646,20 @@ class Halma:
                     localPath.append(move)
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta)
+                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
+
+                    #   Usually this try will fail but if it doesn't it means we're out of time and we return whatever
+                    #       value we were working on
+                    try:
+                        moveMin[2]
+                        if moveMin[1] < currentMin[1]:
+                            return moveMin
+                        else:
+                            #   We have to make sure that the thing being returned has an index at 2
+                            currentMin.append(-1)
+                            return currentMin
+                    except IndexError:
+                        pass
 
                     #   Pruning if the found value is less than the current best value for the maximizer node (alpha)
                     if moveMin[1] <= alpha:
