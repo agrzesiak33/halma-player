@@ -148,7 +148,7 @@ class Halma:
         print(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
-    def play(self, playerColor):
+    def play(self, turnTime):
 
         #   Make the color of the player
 
@@ -247,7 +247,6 @@ class Halma:
         #   Or the same piece that was selected one click before is clicked again
         #   Unhighlight the board and clear the variable holding the selected button
         else:
-            self.board.clearAvailableSpaces()
             self.board.allButtons[x * self.dimen + y].config(bg='white')
             self.board.listBoard[x * self.dimen + y] = self.turn
             self.buttonJustClicked = None
@@ -478,31 +477,20 @@ class Halma:
     def findNextMove(self, timeLimit, turn):
         #   Convert the inefficient representation of the board into a better one to pass around
         board = self.board.listBoard
-        currentMax = []
+        print("Board: ", board)
+        currentMax = [[],-1]
         if turn is 1:
             opposingTurn = 2
         else:
             opposingTurn = 1
 
-        endTime = time.perf_counter() + timeLimit
-        for depth in range(3,100):
-            for piece in range(self.dimen):
-                if board[piece] is turn:
-                    moveMin = self.Min(board, opposingTurn, turn, depth, [int(piece/self.dimen),
-                                                                          piece % self.dimen], endTime)
-                    #   Usually this try will fail but if it doesn't,  we're out of time and we return the findings
-                    try:
-                        moveMin[2]
-                        if moveMin[1] > currentMax[1]:
-                            currentMax[0] = moveMin[0]
-                            currentMax[1] = moveMin[1]
-                        return currentMax
-
-                    except IndexError:
-                        pass
-
-                    if moveMin[1] > currentMax[1]:
-                        currentMax = moveMin
+        endTime = time.perf_counter() + 5
+        for depth in range(3, 6):
+            print(depth)
+            moveMax = self.Max(board, turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            print(moveMax)
+            if moveMax[1] > currentMax[1]:
+                currentMax = moveMax
 
         return currentMax
 
@@ -552,23 +540,23 @@ class Halma:
             #           possible move for green and not necessarily the one that helps red the most
             return [path, 0]
         else:
-            localPath = path
-            localBoard = board
-            currentMax = [[], -math.inf]    # [0] is the path of the best score : list     [1] is the score itself : int
+            localPath = list(path)
+            localBoard = dict(board)
+            currentMax = [[], -999999999]   # [0] is the path of the best score : list     [1] is the score itself : int
             #   All moves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
                 for move in moveSet[2]:
                     #   Set old space to empty
-                    localBoard[moveSet[0 * self.dimen + moveSet[1]]] = 0
+                    localBoard[moveSet[0] * self.dimen + moveSet[1]] = 0
 
                     #   Move the space on the localBoard
                     localBoard[move[0] * self.dimen + move[1]] = turn
 
-                    localPath.append(move)
+                    localPath.append([moveSet[0], moveSet[1], move[0], move[1]])
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
+                    moveMin = self.Min(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
 
                     #   Usually this try will fail but if it doesn't it means we're out of time and we return whatever
                     #       value we were working on
@@ -593,19 +581,19 @@ class Halma:
                     if moveMin[1] < currentMax[1]:
                         currentMax = moveMin
 
-                    localPath = path
-                    localBoard = board
-
+                    localPath = list(path)
+                    localBoard = dict(board)
+            #print("after finding max: ", path, currentMax)
             #   We have to take care of the case where there are no legal moves for the player which
             #       would mean he is the winner and this needs to return the maximum possible score.
-            #   TODO    replace these placeholder strings with either an array with passed in path and highest score
+            #   TODO    replace these placeholder numbers with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
-            if currentMax == -math.inf:
+            if currentMax[1] < 0:
                 #   If this is reached, it means max (green) has no moves to make which means green has won and so
                 #       we signal this with teh highest possible score
-                return "The max score"
+                return [path, 999999999]
             else:
-                return "the score that we found from calling min"
+                return currentMax
 
 
 
@@ -654,20 +642,20 @@ class Halma:
             #           evaluation with respect green.
             return [path, 0]
         else:
-            localPath = path
-            localBoard = board
-            currentMin = [[], math.inf]  # [0] is the path of the best score : list    [1] is the score itself : int
+            localPath = list(path)
+            localBoard = dict(board)
+            currentMin = [[], 999999999]  # [0] is the path of the best score : list    [1] is the score itself : int
             #   allMoves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
                 for move in moveSet[2]:
                     #   Set old space to empty
-                    localBoard[moveSet[0 * self.dimen + moveSet[1]]] = 0
+                    localBoard[moveSet[0] * self.dimen + moveSet[1]] = 0
 
                     #   Move the space on the localBoard
                     localBoard[move[0] * self.dimen + move[1]] = turn
 
-                    localPath.append(move)
+                    localPath.append([moveSet[0], moveSet[1], move[0], move[1]])
 
                     #   Calculate one of the min values coming back and reset variables
                     moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
@@ -695,17 +683,17 @@ class Halma:
                     if moveMin[1] < currentMin[1]:
                         currentMin = moveMin
 
-                    localPath = path
-                    localBoard = board
+                    localPath = list(path)
+                    localBoard = dict(board)
 
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
-            if currentMin == math.inf:
+            if currentMin[1] == 999999999:
                 #   If this is reached, min (red) has no move to make which means they won the game so we
                 #       signal this by returning the lowest possible score.
-                return "The lowest possible score"
+                return [path, -999999999]
             else:
-                return "the score that we found from calling max"
+                return currentMin
 
 halma = Halma([[1, 1], [2, 1]], 4)
 halma.play(100)
