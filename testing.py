@@ -10,8 +10,10 @@ class Board:
         #   Load various pieces
         self.dark_green = PhotoImage(file="images/dark_green_piece.png")
         self.light_green = PhotoImage(file="images/light_green_piece.png")
+        self.dark_green_moved = PhotoImage(file="images/dark_green_piece_moved.png")
         self.dark_red = PhotoImage(file="images/dark_red_piece.png")
         self.light_red = PhotoImage(file="images/light_red_piece.png")
+        self.dark_red_moved = PhotoImage(file="images/dark_red_piece_moved.png")
         self.empty = PhotoImage(file="images/empty_square.png")
         self.available = PhotoImage(file="images/available.png")
 
@@ -94,12 +96,18 @@ class Board:
         for button in self.allButtons:
             print(button.text)
 
-    def clearAvailableSpaces(self):
+    def cleanBoard(self):
         for button in self.allButtons:
             xy = button.text.split(",")
             if self.listBoard[int(xy[0]) * self.dimen + int(xy[1])] == 0:
                 button.image = self.empty
                 button.config(image=self.empty)
+            elif self.listBoard[int(xy[0]) * self.dimen + int(xy[1])] == 1:
+                button.image = self.dark_green
+                button.config(image = self.dark_green)
+            elif self.listBoard[int(xy[0]) * self.dimen + int(xy[1])] == 2:
+                button.image = self.dark_red
+                button.config(image=self.dark_red)
 
 
 class Halma:
@@ -183,7 +191,7 @@ class Halma:
             oldX = int(oldxy[0])
             oldY = int(oldxy[1])
             legalMoves = self.generateLegalMoves(oldX, oldY, self.board.listBoard)
-            self.board.clearAvailableSpaces()
+            self.board.cleanBoard()
             if [x, y] in legalMoves:
                 print("legal move")
                 #   we have to make sure the space isn't occupied...
@@ -193,7 +201,6 @@ class Halma:
                     self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
                     self.board.listBoard[oldX * self.dimen + oldY] = self.turn
                     self.buttonJustClicked = None
-                    self.board.clearAvailableSpaces()
                 # and if it isn't we can go ahead and make the move
                 else:
                     print("handling making teh selection")
@@ -220,6 +227,8 @@ class Halma:
         xy = event.widget.text.split(",")
         x = int(xy[0])
         y = int(xy[1])
+
+        self.board.cleanBoard()
 
         #   If the tile just clicked is the correct color for whose turn it is
         if self.board.listBoard[x * self.dimen + y] is self.turn and self.buttonJustClicked is None:
@@ -253,16 +262,16 @@ class Halma:
         #   Changing the new square to the piece
         #   Also adds a marker to show where the piece came from
         if self.turn is 1:
-            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_green
-            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_green)
+            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_green_moved
+            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_green_moved)
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
 
             self.numGreenMoves += 1
         else:
-            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red
-            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red)
+            self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red_moved
+            self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red_moved)
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
@@ -692,22 +701,20 @@ class Halma:
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
             if currentMin == math.inf:
-                #   If this is reached, min (red) has no move to make which means they won the game so we have
+                #   If this is reached, min (red) has no move to make which means they won the game so we
                 #       signal this by returning the lowest possible score.
                 return "The lowest possible score"
             else:
                 return "the score that we found from calling max"
 
 halma = Halma([[1, 1], [2, 1]], 4)
-halma.play()
+halma.play(100)
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
-#   TODO    implement a time limit into minimax
-#   TODO    make findNextMove use IDS
 #   TODO    add analytics into minimax
-#   TODO    add logic code to highlight the piece that just moved not just where it came from
 #   TODO    make the UI update with "I'm thinking" with a timer with the time remaining
 #   TODO    once someone wins, display the number of moves made and teh final score
 #               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
 #                   the piece to the base
 #   TODO    add a notification that is the humans turn when applicable
+#   TODO    Make it so that if adding more depths is useless, it doesn't keep doing so
