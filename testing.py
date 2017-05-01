@@ -475,14 +475,27 @@ class Halma:
         else:
             opposingTurn = 1
 
-        endTime = time.perf_counter() + time
-        for piece in range(self.dimen):
-            if board[piece] is turn:
-                moveMin = self.Min(board, opposingTurn, turn, 5, [int(piece/self.dimen), piece % self.dimen], endTime)
-                if moveMin[1] > currentMax[1]:
-                    currentMax = moveMin
+        endTime = time.perf_counter() + timeLimit
+        for depth in range(3,100):
+            for piece in range(self.dimen):
+                if board[piece] is turn:
+                    moveMin = self.Min(board, opposingTurn, turn, depth, [int(piece/self.dimen),
+                                                                          piece % self.dimen], endTime)
+                    #   Usually this try will fail but if it doesn't,  we're out of time and we return the findings
+                    try:
+                        moveMin[2]
+                        if moveMin[1] > currentMax[1]:
+                            currentMax[0] = moveMin[0]
+                            currentMax[1] = moveMin[1]
+                        return currentMax
 
-        return currentMax[0]
+                    except IndexError:
+                        pass
+
+                    if moveMin[1] > currentMax[1]:
+                        currentMax = moveMin
+
+        return currentMax
 
 
 
