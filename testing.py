@@ -123,6 +123,9 @@ class Halma:
         self.dimen = boardSize
         self.numPieces = numPieces
         self.turn = 1
+        self.numGreenMoves = 0
+        self.numRedMoves = 0
+
 
         self.board = Board(boardSize, self.emptyButton, self.occupiedButton, numPieces)
 
@@ -255,12 +258,16 @@ class Halma:
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
+
+            self.numGreenMoves += 1
         else:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red)
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
+
+            self.numRedMoves += 1
 
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
@@ -328,11 +335,6 @@ class Halma:
                     if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
                         print(move, " works")
                         legalEndMove.append(move)
-
-
-
-
-
         try:
             legalEndMove
             print(legalEndMove)
@@ -462,9 +464,9 @@ class Halma:
 #               an integer corresponding to whose turn it is
 #               1 for green     2 for red
 #
-# @param[out]   a list containing the
+# @param[out]   a list containing the path and score of the round
 #
-    def findNextMove(self, time, turn):
+    def findNextMove(self, timeLimit, turn):
         #   Convert the inefficient representation of the board into a better one to pass around
         board = self.board.listBoard
         currentMax = []
