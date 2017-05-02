@@ -255,17 +255,19 @@ class Halma:
                 self.board.allButtons[move[0] * self.dimen + move[1]].image = self.board.available
                 self.board.allButtons[move[0] * self.dimen + move[1]].config(image=self.board.available)
 
-            print("Selected a ", self.turn, " piece")
-        # If either the tile is of teh wrong color
+            # print("Selected a ", self.turn, " piece")
+        # If either the tile is of the wrong color
         #   Or the same piece that was selected one click before is clicked again
         #   Unhighlight the board and clear the variable holding the selected button
         else:
-            self.board.allButtons[x * self.dimen + y].config(bg='white')
-            self.board.listBoard[x * self.dimen + y] = self.turn
+            oldXY = self.buttonJustClicked.text.split(",")
+            self.board.allButtons[int(oldXY[0]) * self.dimen + int(oldXY[1])].config(bg='white')
+            self.board.listBoard[oldXY[0] * self.dimen + oldXY[1]] = self.turn
             self.buttonJustClicked = None
+            self.board.cleanBoard()
 
     def movePiece(self, oldX, oldY, newX, newY, turn):
-        print("Moving the piece")
+        self.board.cleanBoard()
         #   Getting rid of old tile
         self.board.listBoard[oldX * self.dimen + oldY] = 0
         self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
