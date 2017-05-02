@@ -85,7 +85,6 @@ class Board:
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
             else:
-                print(tempNumRows)
                 for column in range(tempNumRows, self.dimen):
                     self.allButtons[row * self.dimen + column].image = self.dark_red
                     self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
@@ -93,8 +92,8 @@ class Board:
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
                 tempNumRows += 1
-        for button in self.allButtons:
-            print(button.text)
+#        for button in self.allButtons:
+ #           print(button.text)
 
     def cleanBoard(self):
         for button in self.allButtons:
@@ -145,12 +144,13 @@ class Halma:
             elif playerConfig[1][1] is 2:
                 self.computer = playerConfig[1][0]
 
-        print(self.generateAllLegalMoves(self.turn, self.board.listBoard))
+        #(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
     def play(self, turnTime):
 
         #   Make the color of the player
+        self.time = turnTime
 
         while True:
             self.board.root.update_idletasks()
@@ -206,7 +206,7 @@ class Halma:
             legalMoves = self.generateLegalMoves(oldX, oldY, self.board.listBoard)
             self.board.cleanBoard()
             if [x, y] in legalMoves:
-                print("legal move")
+                #print("legal move")
                 #   we have to make sure the space isn't occupied...
                 if self.board.listBoard[x * self.dimen + y] is not 0:
                     print("There is already a piece there")
@@ -216,12 +216,12 @@ class Halma:
                     self.buttonJustClicked = None
                 # and if it isn't we can go ahead and make the move
                 else:
-                    print("handling making teh selection")
+                    #print("handling making teh selection")
 
                     self.movePiece(oldX, oldY, x, y, self.turn)
 
             else:
-                print("illegal move")
+                #print("illegal move")
                 self.board.listBoard[oldX * self.dimen + oldY] = self.turn
                 self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
                 self.buttonJustClicked = None
@@ -241,12 +241,11 @@ class Halma:
         x = int(xy[0])
         y = int(xy[1])
 
-        self.board.cleanBoard()
+        # self.board.cleanBoard()
 
         #   If the tile just clicked is the correct color for whose turn it is
-        if self.board.listBoard[x * self.dimen + y] is self.turn and self.buttonJustClicked is None:
+        if self.buttonJustClicked is None and self.board.listBoard[x * self.dimen + y] is self.turn:
             #   Save this button that was just selected and show it was selected
-            self.board.listBoard[x * self.dimen + y] = -1
             self.board.allButtons[x * self.dimen + y].config(bg='blue')
             self.buttonJustClicked = self.board.allButtons[x * self.dimen + y]
             #   Get it's available moves and highlight them as available
@@ -255,17 +254,19 @@ class Halma:
                 self.board.allButtons[move[0] * self.dimen + move[1]].image = self.board.available
                 self.board.allButtons[move[0] * self.dimen + move[1]].config(image=self.board.available)
 
-            print("Selected a ", self.turn, " piece")
-        # If either the tile is of teh wrong color
+            # print("Selected a ", self.turn, " piece")
+        # If either the tile is of the wrong color
         #   Or the same piece that was selected one click before is clicked again
         #   Unhighlight the board and clear the variable holding the selected button
         else:
-            self.board.allButtons[x * self.dimen + y].config(bg='white')
-            self.board.listBoard[x * self.dimen + y] = self.turn
+            oldXY = self.buttonJustClicked.text.split(",")
+            self.board.allButtons[int(oldXY[0]) * self.dimen + int(oldXY[1])].config(bg='white')
+            self.board.listBoard[oldXY[0] * self.dimen + oldXY[1]] = self.turn
             self.buttonJustClicked = None
+            self.board.cleanBoard()
 
     def movePiece(self, oldX, oldY, newX, newY, turn):
-        print("Moving the piece")
+        self.board.cleanBoard()
         #   Getting rid of old tile
         self.board.listBoard[oldX * self.dimen + oldY] = 0
         self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
@@ -537,11 +538,12 @@ class Halma:
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
     def Max(self, board, turn, opposingTurn, depth, path, alpha, beta, endTime):
+        #print("max depth: ", depth)
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
         #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
-        if time.perf_counter() > endTime:
-            return [path, 999999999999, -1]
+        #if time.perf_counter() > endTime:
+         #   return [path, 999999999999, -1]
 
         if depth <= 0:
             #   TODO    call the to be made eval function with turn is the turn parameter in the function
@@ -638,11 +640,12 @@ class Halma:
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
     def Min(self, board, turn, opposingTurn, depth, path, alpha, beta, endTime):
+        #print("Min depth:, ",depth)
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
         #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
-        if time.perf_counter() > endTime:
-            return [path, 999999999999, -1]
+        #if time.perf_counter() > endTime:
+         #   return [path, 999999999999, -1]
 
 
         if depth <= 0:
@@ -695,7 +698,7 @@ class Halma:
 
                     localPath = list(path)
                     localBoard = dict(board)
-            #print("after finding min: ", path, currentMin)
+            # print("after finding min: ", path, currentMin)
 
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
@@ -706,14 +709,12 @@ class Halma:
             else:
                 return currentMin
 
-halma = Halma([[1, 1], [2, 1]], 4)
+halma = Halma([[1, 1], [2, 2]], 5)
 halma.play(100)
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
 #   TODO    add analytics into minimax
-#   TODO    make the UI update with "I'm thinking" with a timer with the time remaining
+#   TODO    make the UI update with the time remaining
 #   TODO    once someone wins, display the number of moves made and teh final score
 #               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
 #                   the piece to the base
-#   TODO    add a notification that is the humans turn when applicable
-#   TODO    Make it so that if adding more depths is useless, it doesn't keep doing so
