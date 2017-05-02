@@ -156,16 +156,28 @@ class Halma:
             self.board.root.update_idletasks()
             self.board.root.update()
 
+            if self.handleWin(self.board.listBoard) is not "none":
+                break
+
             try:
                 self.computer
                 #   If it is the computers turn we have to find his move and make it
                 if self.computer is self.turn:
+                    #   Let the human know the computer is thinking
+                    self.board.notification.config(text="Computer is thinking")
+                    self.board.notification.pack()
+
                     pathToBestBoard = self.findNextMove(0, self.turn)
                     print("path: ", pathToBestBoard)
                     pieceToMove = pathToBestBoard[0][0]
                     spaceToMoveTo = pathToBestBoard[0][0]
 
                     self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[2], spaceToMoveTo[3], self.turn)
+
+                    #   Once the computer moved, we can let the human know it is their turn
+                    self.board.notification.config(text="Hooman, it is your turn")
+                    self.board.notification.pack()
+
 
             except AttributeError:
                 pass
@@ -282,12 +294,8 @@ class Halma:
         self.board.listBoard[newX * self.dimen + newY] = self.turn
         self.buttonJustClicked = None
 
-        #print(self.board.listBoard)
         #   If we are here a valid move just happened and now we check to see if anyone won.
-        if self.isWin(self.board.listBoard) is not "none":
-            print(self.isWin(self.board.listBoard))
-            self.board.notification.config(text=self.isWin(self.board.listBoard) + " won!")
-            self.board.notification.pack()
+        self.handleWin(self.board.listBoard)
 
         #   moves the turn to the other person
         if self.turn is 1:
@@ -335,21 +343,18 @@ class Halma:
         #   Per the game instructions, once a piece enters their safe zone it can't leave
         #   This probably needs to be sped up a ton
         if self.board.allButtons[x * dimen + y].text[-1] != "0":
-            print(self.board.allButtons[x * dimen + y].text[-1])
-            print("before removals: ")
-            print(legalMoves)
             if self.board.allButtons[x * dimen + y].text[-1] == str(self.turn):
                 legalEndMove = []
                 for move in legalMoves:
                     if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
-                        print(move, " works")
+                        #print(move, " works")
                         legalEndMove.append(move)
         try:
             legalEndMove
-            print(legalEndMove)
+            #print(legalEndMove)
             return legalEndMove
         except UnboundLocalError:
-            print(legalMoves)
+            #print(legalMoves)
             return legalMoves
 
 # @brief    Generates all the legal moves on the board given whose turn it is
@@ -417,7 +422,7 @@ class Halma:
 #
 # @param[out]   string
 #               "red" if red won    "green" if green won    "none" if neither team won
-    def isWin(self, board):
+    def handleWin(self, board):
         # if (self.numPieces == 19):
         numRows = 2
 
@@ -437,6 +442,8 @@ class Halma:
             if not winner:
                 break
         if winner:
+            self.board.notification.config(text="Red won in "+ str(self.numRedMoves) + " moves")
+            self.board.notification.pack()
             return "Red"
 
         winner = True
@@ -459,6 +466,8 @@ class Halma:
                 break
 
         if winner:
+            self.board.notification.config(text="Green won in " + str(self.numRedMoves) + " moves")
+            self.board.notification.pack()
             return "Green"
         else:
             return "none"
