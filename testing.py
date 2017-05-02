@@ -161,10 +161,11 @@ class Halma:
                 #   If it is the computers turn we have to find his move and make it
                 if self.computer is self.turn:
                     pathToBestBoard = self.findNextMove(0, self.turn)
-                    pieceToMove = pathToBestBoard[0]
-                    spaceToMoveTo = pathToBestBoard[1]
+                    print("path: ", pathToBestBoard)
+                    pieceToMove = pathToBestBoard[0][0]
+                    spaceToMoveTo = pathToBestBoard[0][0]
 
-                    self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[0], spaceToMoveTo[1])
+                    self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[2], spaceToMoveTo[3], self.turn)
 
             except AttributeError:
                 pass
@@ -578,7 +579,7 @@ class Halma:
                     if moveMin[1] > alpha:
                         alpha = moveMin[1]
 
-                    if moveMin[1] < currentMax[1]:
+                    if moveMin[1] > currentMax[1]:
                         currentMax = moveMin
 
                     localPath = list(path)
@@ -658,14 +659,14 @@ class Halma:
                     localPath.append([moveSet[0], moveSet[1], move[0], move[1]])
 
                     #   Calculate one of the min values coming back and reset variables
-                    moveMin = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
+                    moveMax = self.Max(localBoard, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
 
                     #   Usually this try will fail but if it doesn't it means we're out of time and we return whatever
                     #       value we were working on
                     try:
-                        moveMin[2]
-                        if moveMin[1] < currentMin[1]:
-                            return moveMin
+                        moveMax[2]
+                        if moveMax[1] < currentMin[1]:
+                            return moveMax
                         else:
                             #   We have to make sure that the thing being returned has an index at 2
                             currentMin.append(-1)
@@ -674,17 +675,18 @@ class Halma:
                         pass
 
                     #   Pruning if the found value is less than the current best value for the maximizer node (alpha)
-                    if moveMin[1] <= alpha:
-                        return moveMin
+                    if moveMax[1] <= alpha:
+                        return moveMax
 
-                    if moveMin[1] < beta:
-                        beta = moveMin[1]
+                    if moveMax[1] < beta:
+                        beta = moveMax[1]
 
-                    if moveMin[1] < currentMin[1]:
-                        currentMin = moveMin
+                    if moveMax[1] < currentMin[1]:
+                        currentMin = moveMax
 
                     localPath = list(path)
                     localBoard = dict(board)
+            #print("after finding min: ", path, currentMin)
 
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
