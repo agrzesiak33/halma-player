@@ -718,5 +718,3 @@ halma.play(100)
 #   TODO    once someone wins, display the number of moves made and teh final score
 #               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
 #                   the piece to the base
-#   TODO    add a notification that is the humans turn when applicable
-#   TODO    fix bug with placing a piece on another piece
