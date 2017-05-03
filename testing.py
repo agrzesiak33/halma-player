@@ -108,6 +108,11 @@ class Board:
                 button.image = self.dark_red
                 button.config(image=self.dark_red)
 
+    def clearPieceClickListener(self, color):
+        for piece in range(self.dimen * self.dimen):
+            if self.listBoard[piece] == color:
+                self.allButtons[piece].unbind('<Button-1>')
+
 
 class Halma:
 
@@ -138,25 +143,23 @@ class Halma:
 
         self.buttonJustClicked = None
 
-        if playerConfig[0][1] is 2 or playerConfig[1][1] is 2:
-            if playerConfig[0][1] is 2:
-                self.computer = playerConfig[0][0]
-            elif playerConfig[1][1] is 2:
-                self.computer = playerConfig[1][0]
+        if playerConfig[0][1] is 2:
+            self.computer = playerConfig[0][0]
+            self.board.clearPieceClickListener(playerConfig[0][0])
+        elif playerConfig[1][1] is 2:
+            self.computer = playerConfig[1][0]
+            self.board.clearPieceClickListener(playerConfig[1][0])
 
         #(self.generateAllLegalMoves(self.turn, self.board.listBoard))
         # self.board.root.mainloop()
 
     def play(self, turnTime):
-
-        #   Make the color of the player
-        self.time = turnTime
-
         while True:
             self.board.root.update_idletasks()
             self.board.root.update()
 
             if self.handleWin(self.board.listBoard) is not "none":
+                print("winner")
                 break
 
             try:
@@ -166,8 +169,9 @@ class Halma:
                     #   Let the human know the computer is thinking
                     self.board.notification.config(text="Computer is thinking")
                     self.board.notification.pack()
+                    self.board.root.update()
 
-                    pathToBestBoard = self.findNextMove(0, self.turn)
+                    pathToBestBoard = self.findNextMove(turnTime, self.turn)
                     print("path: ", pathToBestBoard)
                     pieceToMove = pathToBestBoard[0][0]
                     spaceToMoveTo = pathToBestBoard[0][0]
@@ -192,6 +196,8 @@ class Halma:
 #               The event object after a click has occurred containing the Button widget
 #                   of the button that was just clicked
     def emptyButton(self, event):
+        print("Board: ", self.board.listBoard)
+
         xy = event.widget.text.split(",")
         x = int(xy[0])
         y = int(xy[1])
@@ -216,8 +222,6 @@ class Halma:
                     self.buttonJustClicked = None
                 # and if it isn't we can go ahead and make the move
                 else:
-                    #print("handling making teh selection")
-
                     self.movePiece(oldX, oldY, x, y, self.turn)
 
             else:
@@ -332,11 +336,36 @@ class Halma:
                     if 0 <= column < dimen:
                         #   If an adjacent space is empty it is obvious we can move there
                         if board[row * dimen + column] == 0 and [row, column] not in legalMoves:
-                            #   Checking to make sure that we don't enter our base again
-                            if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] != str(2):
-                                append([row, column])
-                            elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] != str(1):
-                                append([row, column])
+                            #   If the piece is in either base...
+                            if self.board.allButtons[x * dimen + y].text[-1] != "0":
+                                #   If the ending location is in a base...
+                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                    #   We allow the move since a piece can move around a base once it gets there
+                                    append([row, column])
+
+                                #   If the ending position is not in a base
+                                else:
+                                    #   If it wants to leave its own base OK, if it wants to leave it's goal base NO
+                                    if self.turn == 1 and self.board.allButtons[x * dimen + y].text[-1] == "2":
+                                        append([row, column])
+                                    elif self.turn == 2 and self.board.allButtons[x * dimen + y].text[-1] == "1":
+                                        append([row, column])
+
+
+                            #   If the piece isn't in the base...
+                            else:
+                                #   If the potential move makes it in a base
+                                row = row+1
+                                row = row-1
+                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                    #   If the piece wants to move in its goal base OK, in its own base NO
+                                    if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] == "1":
+                                        append([row, column])
+                                    elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] == "2":
+                                        append([row, column])
+                                #   If the piece nor the potential move is in a base then we are fine
+                                else:
+                                    append([row, column])
                         # If there is a piece there, we have to check for jumps
                         else:
                             self.findJumps([], legalMoves, board, x, y)
@@ -348,14 +377,11 @@ class Halma:
                 legalEndMove = []
                 for move in legalMoves:
                     if self.board.allButtons[move[0] * dimen + move[1]].text[-1] == str(self.turn):
-                        #print(move, " works")
                         legalEndMove.append(move)
         try:
             legalEndMove
-            #print(legalEndMove)
             return legalEndMove
         except UnboundLocalError:
-            #print(legalMoves)
             return legalMoves
 
 # @brief    Generates all the legal moves on the board given whose turn it is
@@ -489,16 +515,27 @@ class Halma:
         #   Convert the inefficient representation of the board into a better one to pass around
         board = self.board.listBoard
         print("Board: ", board)
-        currentMax = [[],-1]
+        currentMax = [[], -1]
         if turn is 1:
             opposingTurn = 2
         else:
             opposingTurn = 1
 
-        endTime = time.perf_counter() + 5
-        for depth in range(3, 6):
+        endTime = time.time()
+        endTime += timeLimit
+        print(endTime)
+        print(time.time())
+        for depth in range(3, 100):
             print(depth)
             moveMax = self.Max(board, turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            try:
+                moveMax[2]
+                if moveMax[1] > currentMax[1]:
+                    return moveMax
+                else:
+                    return currentMax
+            except (IndexError, TypeError) as e:
+                pass
             print(moveMax)
             if moveMax[1] > currentMax[1]:
                 currentMax = moveMax
@@ -542,8 +579,8 @@ class Halma:
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
         #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
-        #if time.perf_counter() > endTime:
-         #   return [path, 999999999999, -1]
+        if time.time() > endTime:
+            return [path, 999999999999, -1]
 
         if depth <= 0:
             #   TODO    call the to be made eval function with turn is the turn parameter in the function
@@ -554,7 +591,7 @@ class Halma:
         else:
             localPath = list(path)
             localBoard = dict(board)
-            currentMax = [[], -999999999]   # [0] is the path of the best score : list     [1] is the score itself : int
+            currentMax = [path, -999999999]   # [0] is the path of the best score : list   [1] is the score itself : int
             #   All moves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
@@ -580,7 +617,7 @@ class Halma:
                             #   We have to make sure that the thing being returned has an index at 2
                             currentMax.append(-1)
                             return currentMax
-                    except IndexError:
+                    except (IndexError, TypeError) as e:
                         pass
 
                     #   Pruning is the found value is larger than the best current value for the minimizer node (beta)
@@ -598,14 +635,7 @@ class Halma:
             #print("after finding max: ", path, currentMax)
             #   We have to take care of the case where there are no legal moves for the player which
             #       would mean he is the winner and this needs to return the maximum possible score.
-            #   TODO    replace these placeholder numbers with either an array with passed in path and highest score
-            #   TODO    or the score we found above from calling the min function
-            if currentMax[1] < 0:
-                #   If this is reached, it means max (green) has no moves to make which means green has won and so
-                #       we signal this with teh highest possible score
-                return [path, 999999999]
-            else:
-                return currentMax
+            return currentMax
 
 
 
@@ -644,8 +674,8 @@ class Halma:
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
         #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
-        #if time.perf_counter() > endTime:
-         #   return [path, 999999999999, -1]
+        if time.time() > endTime:
+            return [path, 999999999999, -1]
 
 
         if depth <= 0:
@@ -657,7 +687,7 @@ class Halma:
         else:
             localPath = list(path)
             localBoard = dict(board)
-            currentMin = [[], 999999999]  # [0] is the path of the best score : list    [1] is the score itself : int
+            currentMin = [path, 999999999]  # [0] is the path of the best score : list    [1] is the score itself : int
             #   allMoves is in the form: [[oldX, oldY, [[possX, possY],...],...]
             allMoves = self.generateAllLegalMoves(turn, board)
             for moveSet in allMoves:
@@ -683,7 +713,7 @@ class Halma:
                             #   We have to make sure that the thing being returned has an index at 2
                             currentMin.append(-1)
                             return currentMin
-                    except IndexError:
+                    except (IndexError, TypeError) as e:
                         pass
 
                     #   Pruning if the found value is less than the current best value for the maximizer node (alpha)
@@ -702,15 +732,10 @@ class Halma:
 
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
-            if currentMin[1] == 999999999:
-                #   If this is reached, min (red) has no move to make which means they won the game so we
-                #       signal this by returning the lowest possible score.
-                return [path, -999999999]
-            else:
-                return currentMin
+            return currentMin
 
 halma = Halma([[1, 1], [2, 2]], 5)
-halma.play(100)
+halma.play(5)
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
 #   TODO    add analytics into minimax
