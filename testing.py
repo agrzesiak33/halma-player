@@ -108,6 +108,11 @@ class Board:
                 button.image = self.dark_red
                 button.config(image=self.dark_red)
 
+    def clearPieceClickListener(self, color):
+        for piece in range(self.dimen * self.dimen):
+            if self.listBoard[piece] == color:
+                self.allButtons[piece].unbind('<Button-1>')
+
 
 class Halma:
 
