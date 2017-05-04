@@ -17,6 +17,15 @@ class Board:
         self.empty = PhotoImage(file="images/empty_square.png")
         self.available = PhotoImage(file="images/available.png")
 
+        #   Each bit in this board representation is a square on the board
+        #   FYI When printing these representations, green is on the right red on the left (only on the start)
+        self.allBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.greenBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.redBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.redGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.greenGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.eitherGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+
         #   The frames that hold all the content for the window
         self.notificationFrame = Frame(self.root, height=50)
         self.boardFrame = Frame(self.root)
@@ -65,6 +74,13 @@ class Board:
                     #   Sets greens starting zone as reds safe zone.
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
+
+                    #   Using the new board representation
+                    self.allBoard |= (1 << (row * self.dimen + column))
+                    self.greenBoard |= (1 << (row * self.dimen + column))
+                    self.redGoal |= (1 << (row * self.dimen + column))
+                    self.eitherGoal |= (1 << (row * self.dimen + column))
+
             else:
                 for column in range(numRows - row + 1):
                     self.allButtons[row * self.dimen + column].image = self.dark_green
@@ -72,6 +88,13 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
+
+                    #   Using the new board representation
+                    self.allBoard |= (1 << (row * self.dimen + column))
+                    self.greenBoard |= (1 << (row * self.dimen + column))
+                    self.redGoal |= (1 << (row * self.dimen + column))
+                    self.eitherGoal |= (1 << (row * self.dimen + column))
+
 
         # Set the red pieces
         tempNumRows = self.dimen - numRows + 1
@@ -84,6 +107,11 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
+
+                    #   Using the new board representation
+                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                    self.redBoard |= (1 << (row * self.dimen + column))
+                    self.greenGoal |= (1 << (row * self.dimen + column))
             else:
                 for column in range(tempNumRows, self.dimen):
                     self.allButtons[row * self.dimen + column].image = self.dark_red
@@ -91,9 +119,16 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
+
+                    #   Using the new board representation
+                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                    self.redBoard |= (1 << (row * self.dimen + column))
+                    self.greenGoal |= (1 << (row * self.dimen + column))
                 tempNumRows += 1
 #        for button in self.allButtons:
  #           print(button.text)
+        #print(bin(self.allBoard))
+
 
     def cleanBoard(self):
         for button in self.allButtons:
@@ -212,18 +247,7 @@ class Halma:
             legalMoves = self.generateLegalMoves(oldX, oldY, self.board.listBoard)
             self.board.cleanBoard()
             if [x, y] in legalMoves:
-                #print("legal move")
-                #   we have to make sure the space isn't occupied...
-                if self.board.listBoard[x * self.dimen + y] is not 0:
-                    print("There is already a piece there")
-                    #   Deselecting the button and clear the available markers
-                    self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
-                    self.board.listBoard[oldX * self.dimen + oldY] = self.turn
-                    self.buttonJustClicked = None
-                # and if it isn't we can go ahead and make the move
-                else:
-                    self.movePiece(oldX, oldY, x, y, self.turn)
-
+                self.movePiece(oldX, oldY, x, y, self.turn)
             else:
                 #print("illegal move")
                 self.board.listBoard[oldX * self.dimen + oldY] = self.turn
@@ -253,7 +277,7 @@ class Halma:
             self.board.allButtons[x * self.dimen + y].config(bg='blue')
             self.buttonJustClicked = self.board.allButtons[x * self.dimen + y]
             #   Get it's available moves and highlight them as available
-            availableMoves = self.generateLegalMoves(x, y, self.board.listBoard)
+            availableMoves = self.generateLegalMoves(x, y, self.board.allBoard)
             for move in availableMoves:
                 self.board.allButtons[move[0] * self.dimen + move[1]].image = self.board.available
                 self.board.allButtons[move[0] * self.dimen + move[1]].config(image=self.board.available)
@@ -265,22 +289,30 @@ class Halma:
         else:
             oldXY = self.buttonJustClicked.text.split(",")
             self.board.allButtons[int(oldXY[0]) * self.dimen + int(oldXY[1])].config(bg='white')
-            self.board.listBoard[oldXY[0] * self.dimen + oldXY[1]] = self.turn
             self.buttonJustClicked = None
             self.board.cleanBoard()
 
-    def movePiece(self, oldX, oldY, newX, newY, turn):
+    def movePiece(self, oldX, oldY, newX, newY):
         self.board.cleanBoard()
         #   Getting rid of old tile
         self.board.listBoard[oldX * self.dimen + oldY] = 0
         self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
         self.board.allButtons[oldX * self.dimen + oldY].bind("<Button-1>", self.emptyButton)
+        #   Getting rid of old tile on new representation
+        self.board.allBoard &= ~(1 << (oldX * self.dimen + oldY))
+        if self.turn == 1:
+            self.board.greenBoard &= ~(1 << (oldX * self.dimen + oldY))
+        else:
+            self.board.redBoard &= ~(1 << (oldX * self.dimen + oldY))
+
 
         #   Changing the new square to the piece
         #   Also adds a marker to show where the piece came from
         if self.turn is 1:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_green_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_green_moved)
+
+            self.board.greenBoard |= (1 << (newX * self.dimen + newY))
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
@@ -290,6 +322,8 @@ class Halma:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red_moved)
 
+            self.board.redBoard |= (1 << (newX * self.dimen + newY))
+
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
 
@@ -297,6 +331,7 @@ class Halma:
 
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
+        self.board.allBoard |= (1 << (newX * self.dimen + newY))
         self.buttonJustClicked = None
 
         #   If we are here a valid move just happened and now we check to see if anyone won.
@@ -324,7 +359,7 @@ class Halma:
 #
 # @param[out]   list
 #               a list containing all legal moves
-    def generateLegalMoves(self, x, y, board):
+    def generateLegalMoves(self, x, y, allBoard):
         legalMoves = []
         append = legalMoves.append
         dimen = self.dimen
@@ -334,45 +369,43 @@ class Halma:
             if 0 <= row < dimen:
                 for column in range(y - 1, y + 2):
                     if 0 <= column < dimen:
-                        #   If an adjacent space is empty it is obvious we can move there
-                        if board[row * dimen + column] == 0 and [row, column] not in legalMoves:
+                        #   If an adjacent space is empty...
+                        if not allBoard & (1 << (row * dimen + column)) and [row, column] not in legalMoves:
                             #   If the piece is in either base...
-                            if self.board.allButtons[x * dimen + y].text[-1] != "0":
+                            if self.board.eitherGoal & (1 << (x * dimen + y)):
                                 #   If the ending location is in a base...
-                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                if self.board.eitherGoal & (1 << (row * dimen + column)):
                                     #   We allow the move since a piece can move around a base once it gets there
                                     append([row, column])
 
                                 #   If the ending position is not in a base
                                 else:
                                     #   If it wants to leave its own base OK, if it wants to leave it's goal base NO
-                                    if self.turn == 1 and self.board.allButtons[x * dimen + y].text[-1] == "2":
+                                    if self.turn == 1 and self.board.redGoal & (1 << (x * dimen + y)):
                                         append([row, column])
-                                    elif self.turn == 2 and self.board.allButtons[x * dimen + y].text[-1] == "1":
+                                    elif self.turn == 2 and self.board.greenGoal & (1 << (x * dimen + y)):
                                         append([row, column])
 
 
                             #   If the piece isn't in the base...
                             else:
                                 #   If the potential move makes it in a base
-                                row = row+1
-                                row = row-1
-                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                if self.board.eitherGoal & (1 << (row * dimen + column)):
                                     #   If the piece wants to move in its goal base OK, in its own base NO
-                                    if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] == "1":
+                                    if self.turn == 1 and self.board.greenGoal & (1 << (row * dimen + column)):
                                         append([row, column])
-                                    elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] == "2":
+                                    elif self.turn == 2 and self.board.redGoal & (1 << (row * dimen + column)):
                                         append([row, column])
                                 #   If the piece nor the potential move is in a base then we are fine
                                 else:
                                     append([row, column])
                         # If there is a piece there, we have to check for jumps
                         else:
-                            self.findJumps([], legalMoves, board, x, y)
+                            self.findJumps([], legalMoves, allBoard, x, y)
 
         #   Per the game instructions, once a piece enters their safe zone it can't leave
         #   This probably needs to be sped up a ton
-        if self.board.allButtons[x * dimen + y].text[-1] != "0":
+        if self.board.allBoard & (1 << (x * dimen + y)):
             if self.board.allButtons[x * dimen + y].text[-1] == str(self.turn):
                 legalEndMove = []
                 for move in legalMoves:
@@ -427,11 +460,11 @@ class Halma:
             for columnOffset in range(-1, 2):
                 #   If the adjacent spot is in bounds and there is a piece to jump over...
                 if self.isInBounds(x + rowOffset, y + columnOffset) and \
-                                board[(x + rowOffset) * self.dimen + (y + columnOffset)] is not 0:
+                                board & (1 << ((x + rowOffset) * self.dimen + (y + columnOffset))):
                     newX = x + (rowOffset + rowOffset)
                     newY = y + (columnOffset + columnOffset)
                     #   If the spot after the jump is in bounds and isn't already occupied...
-                    if self.isInBounds(newX, newY) and board[newX * self.dimen + newY] is 0 \
+                    if self.isInBounds(newX, newY) and not board & (1 << (newX * self.dimen + newY)) \
                             and [newX, newY] not in visited and [newX, newY] not in legalMoves:
                         append([newX, newY])
                         self.findJumps(visited, legalMoves, board, newX, newY)
