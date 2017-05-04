@@ -292,18 +292,27 @@ class Halma:
             self.buttonJustClicked = None
             self.board.cleanBoard()
 
-    def movePiece(self, oldX, oldY, newX, newY, turn):
+    def movePiece(self, oldX, oldY, newX, newY):
         self.board.cleanBoard()
         #   Getting rid of old tile
         self.board.listBoard[oldX * self.dimen + oldY] = 0
         self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
         self.board.allButtons[oldX * self.dimen + oldY].bind("<Button-1>", self.emptyButton)
+        #   Getting rid of old tile on new representation
+        self.board.allBoard &= ~(1 << (oldX * self.dimen + oldY))
+        if self.turn == 1:
+            self.board.greenBoard &= ~(1 << (oldX * self.dimen + oldY))
+        else:
+            self.board.redBoard &= ~(1 << (oldX * self.dimen + oldY))
+
 
         #   Changing the new square to the piece
         #   Also adds a marker to show where the piece came from
         if self.turn is 1:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_green_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_green_moved)
+
+            self.board.greenBoard |= (1 << (newX * self.dimen + newY))
 
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_green
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
@@ -313,6 +322,8 @@ class Halma:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red_moved)
 
+            self.board.redBoard |= (1 << (newX * self.dimen + newY))
+
             self.board.allButtons[oldX * self.dimen + oldY].image = self.board.light_red
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_red)
 
@@ -320,6 +331,7 @@ class Halma:
 
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
+        self.board.allBoard |= (1 << (newX * self.dimen + newY))
         self.buttonJustClicked = None
 
         #   If we are here a valid move just happened and now we check to see if anyone won.
