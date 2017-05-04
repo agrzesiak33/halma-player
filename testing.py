@@ -17,6 +17,15 @@ class Board:
         self.empty = PhotoImage(file="images/empty_square.png")
         self.available = PhotoImage(file="images/available.png")
 
+        #   Each bit in this board representation is a square on the board
+        #   FYI When printing these representations, green is on the right red on the left (only on the start)
+        self.allBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.greenBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.redBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.redGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.greenGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+        self.eitherGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
+
         #   The frames that hold all the content for the window
         self.notificationFrame = Frame(self.root, height=50)
         self.boardFrame = Frame(self.root)
@@ -65,6 +74,13 @@ class Board:
                     #   Sets greens starting zone as reds safe zone.
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
+
+                    #   Using the new board representation
+                    self.allBoard |= (1 << (row * self.dimen + column))
+                    self.greenBoard |= (1 << (row * self.dimen + column))
+                    self.redGoal |= (1 << (row * self.dimen + column))
+                    self.eitherGoal |= (1 << (row * self.dimen + column))
+
             else:
                 for column in range(numRows - row + 1):
                     self.allButtons[row * self.dimen + column].image = self.dark_green
@@ -72,6 +88,13 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_green)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
                     self.listBoard[row * self.dimen + column] = 1
+
+                    #   Using the new board representation
+                    self.allBoard |= (1 << (row * self.dimen + column))
+                    self.greenBoard |= (1 << (row * self.dimen + column))
+                    self.redGoal |= (1 << (row * self.dimen + column))
+                    self.eitherGoal |= (1 << (row * self.dimen + column))
+
 
         # Set the red pieces
         tempNumRows = self.dimen - numRows + 1
@@ -84,6 +107,11 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
+
+                    #   Using the new board representation
+                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                    self.redBoard |= (1 << (row * self.dimen + column))
+                    self.greenGoal |= (1 << (row * self.dimen + column))
             else:
                 for column in range(tempNumRows, self.dimen):
                     self.allButtons[row * self.dimen + column].image = self.dark_red
@@ -91,9 +119,16 @@ class Board:
                     self.allButtons[row * self.dimen + column].config(image=self.dark_red)
                     self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
                     self.listBoard[row * self.dimen + column] = 2
+
+                    #   Using the new board representation
+                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                    self.redBoard |= (1 << (row * self.dimen + column))
+                    self.greenGoal |= (1 << (row * self.dimen + column))
                 tempNumRows += 1
 #        for button in self.allButtons:
  #           print(button.text)
+        #print(bin(self.allBoard))
+
 
     def cleanBoard(self):
         for button in self.allButtons:
