@@ -277,7 +277,7 @@ class Halma:
             self.board.allButtons[x * self.dimen + y].config(bg='blue')
             self.buttonJustClicked = self.board.allButtons[x * self.dimen + y]
             #   Get it's available moves and highlight them as available
-            availableMoves = self.generateLegalMoves(x, y, self.board.listBoard)
+            availableMoves = self.generateLegalMoves(x, y, self.board.allBoard)
             for move in availableMoves:
                 self.board.allButtons[move[0] * self.dimen + move[1]].image = self.board.available
                 self.board.allButtons[move[0] * self.dimen + move[1]].config(image=self.board.available)
@@ -359,7 +359,7 @@ class Halma:
 #
 # @param[out]   list
 #               a list containing all legal moves
-    def generateLegalMoves(self, x, y, board):
+    def generateLegalMoves(self, x, y, allBoard):
         legalMoves = []
         append = legalMoves.append
         dimen = self.dimen
@@ -369,45 +369,43 @@ class Halma:
             if 0 <= row < dimen:
                 for column in range(y - 1, y + 2):
                     if 0 <= column < dimen:
-                        #   If an adjacent space is empty it is obvious we can move there
-                        if board[row * dimen + column] == 0 and [row, column] not in legalMoves:
+                        #   If an adjacent space is empty...
+                        if not allBoard & (1 << (row * dimen + column)) and [row, column] not in legalMoves:
                             #   If the piece is in either base...
-                            if self.board.allButtons[x * dimen + y].text[-1] != "0":
+                            if self.board.eitherGoal & (1 << (x * dimen + y)):
                                 #   If the ending location is in a base...
-                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                if self.board.eitherGoal & (1 << (row * dimen + column)):
                                     #   We allow the move since a piece can move around a base once it gets there
                                     append([row, column])
 
                                 #   If the ending position is not in a base
                                 else:
                                     #   If it wants to leave its own base OK, if it wants to leave it's goal base NO
-                                    if self.turn == 1 and self.board.allButtons[x * dimen + y].text[-1] == "2":
+                                    if self.turn == 1 and self.board.redGoal & (1 << (x * dimen + y)):
                                         append([row, column])
-                                    elif self.turn == 2 and self.board.allButtons[x * dimen + y].text[-1] == "1":
+                                    elif self.turn == 2 and self.board.greenGoal & (1 << (x * dimen + y)):
                                         append([row, column])
 
 
                             #   If the piece isn't in the base...
                             else:
                                 #   If the potential move makes it in a base
-                                row = row+1
-                                row = row-1
-                                if self.board.allButtons[row * dimen + column].text[-1] != "0":
+                                if self.board.eitherGoal & (1 << (row * dimen + column)):
                                     #   If the piece wants to move in its goal base OK, in its own base NO
-                                    if self.turn == 1 and self.board.allButtons[row * dimen + column].text[-1] == "1":
+                                    if self.turn == 1 and self.board.greenGoal & (1 << (row * dimen + column)):
                                         append([row, column])
-                                    elif self.turn == 2 and self.board.allButtons[row * dimen + column].text[-1] == "2":
+                                    elif self.turn == 2 and self.board.redGoal & (1 << (row * dimen + column)):
                                         append([row, column])
                                 #   If the piece nor the potential move is in a base then we are fine
                                 else:
                                     append([row, column])
                         # If there is a piece there, we have to check for jumps
                         else:
-                            self.findJumps([], legalMoves, board, x, y)
+                            self.findJumps([], legalMoves, allBoard, x, y)
 
         #   Per the game instructions, once a piece enters their safe zone it can't leave
         #   This probably needs to be sped up a ton
-        if self.board.allButtons[x * dimen + y].text[-1] != "0":
+        if self.board.allBoard & (1 << (x * dimen + y)):
             if self.board.allButtons[x * dimen + y].text[-1] == str(self.turn):
                 legalEndMove = []
                 for move in legalMoves:
@@ -462,11 +460,11 @@ class Halma:
             for columnOffset in range(-1, 2):
                 #   If the adjacent spot is in bounds and there is a piece to jump over...
                 if self.isInBounds(x + rowOffset, y + columnOffset) and \
-                                board[(x + rowOffset) * self.dimen + (y + columnOffset)] is not 0:
+                                board & (1 << ((x + rowOffset) * self.dimen + (y + columnOffset))):
                     newX = x + (rowOffset + rowOffset)
                     newY = y + (columnOffset + columnOffset)
                     #   If the spot after the jump is in bounds and isn't already occupied...
-                    if self.isInBounds(newX, newY) and board[newX * self.dimen + newY] is 0 \
+                    if self.isInBounds(newX, newY) and not board & (1 << (newX * self.dimen + newY)) \
                             and [newX, newY] not in visited and [newX, newY] not in legalMoves:
                         append([newX, newY])
                         self.findJumps(visited, legalMoves, board, newX, newY)
