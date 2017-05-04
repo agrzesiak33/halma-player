@@ -212,18 +212,7 @@ class Halma:
             legalMoves = self.generateLegalMoves(oldX, oldY, self.board.listBoard)
             self.board.cleanBoard()
             if [x, y] in legalMoves:
-                #print("legal move")
-                #   we have to make sure the space isn't occupied...
-                if self.board.listBoard[x * self.dimen + y] is not 0:
-                    print("There is already a piece there")
-                    #   Deselecting the button and clear the available markers
-                    self.board.allButtons[oldX * self.dimen + oldY].config(bg='white')
-                    self.board.listBoard[oldX * self.dimen + oldY] = self.turn
-                    self.buttonJustClicked = None
-                # and if it isn't we can go ahead and make the move
-                else:
-                    self.movePiece(oldX, oldY, x, y, self.turn)
-
+                self.movePiece(oldX, oldY, x, y, self.turn)
             else:
                 #print("illegal move")
                 self.board.listBoard[oldX * self.dimen + oldY] = self.turn
@@ -265,7 +254,6 @@ class Halma:
         else:
             oldXY = self.buttonJustClicked.text.split(",")
             self.board.allButtons[int(oldXY[0]) * self.dimen + int(oldXY[1])].config(bg='white')
-            self.board.listBoard[oldXY[0] * self.dimen + oldXY[1]] = self.turn
             self.buttonJustClicked = None
             self.board.cleanBoard()
 
