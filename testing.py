@@ -463,7 +463,8 @@ class Halma:
 #               the integer representation of the board for one color when all pieces are in the base
 #
 # @param[out]   True if the color won   False otherwise
-    def isWin(self, colorBoard, colorGoal):
+    @staticmethod
+    def isWin(colorBoard, colorGoal):
 
         if colorBoard is colorGoal:
             return True
@@ -482,7 +483,16 @@ class Halma:
 #
 # @param[out]   a list containing the path and score of the round
 #
-    def findNextMove(self, timeLimit, turn):
+    def findNextMove(self, timeLimit, turn, allBoard=-1, greenBoard=-1, redBoard=-1):
+        #   if allBoard is not -1 we are analyzing so we use the passed in boards instead
+        if allBoard == -1:
+            localAllBoard = self.board.allBoard
+            localGreenBoard = self.board.greenBoard
+            localRedBoard = self.board.redBoard
+        else:
+            localAllBoard = allBoard
+            localGreenBoard = greenBoard
+            localRedBoard = redBoard
         #   Convert the inefficient representation of the board into a better one to pass around
         currentMax = [[], -1]
         if turn is 1:
@@ -495,7 +505,9 @@ class Halma:
         #(endTime)
         #print(time.time())
         for depth in range(3, 100):
-            moveMax = self.Max(self.board.allBoard, self.board.greenBoard, self.board.redBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+
+            #   If we are out of time, moveMax will come back with a value at index 2
             try:
                 moveMax[2]
                 if moveMax[1] > currentMax[1]:
@@ -742,9 +754,39 @@ class Halma:
             #   TODO    or the score we found above from calling the min function
             return currentMin
 
+    def analyzeMinimax(self):
+        plysVSTime = dict()
+        maxPlys = 0
+
+        allBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        greenBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        redBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+
+        #   Create temporary random boards for time testing
+        #   Create green board
+        for piece in range(8):
+            bitShift = random.randint(0, 63)
+            if ~(allBoard & (1 << bitShift)):
+                allBoard |= (1 << bitShift)
+                greenBoard |= (1 << bitShift)
+        #   Create red board
+        for piece in range(8):
+            bitShift = random.randint(0, 63)
+            if ~(allBoard & (1 << bitShift)):
+                allBoard |= (1 << bitShift)
+                redBoard |= (1 << bitShift)
+
+        for time in range(0, 120, 5):
+            plys = self.findNextMove(time, 1, allBoard, greenBoard, redBoard)
+            #print(plys)
+            print(time, ": ", len(plys[0]))
+            plysVSTime[time / 5] = len(plys[0])
+        print(plysVSTime)
+
 
 halma = Halma([[1, 1], [2, 2]], 8)
-halma.play(5)
+halma.analyzeMinimax()
+#halma.play(5)
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
 #   TODO    add analytics into minimax
