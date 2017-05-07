@@ -62,69 +62,42 @@ class Board:
 
         self.numPieces = numPieces
         # if (numPieces == 19):
-        numRows = 2
+        numRows = 4
 
         # Set the green pieces
+        piecesInRow = 4
         for row in range(numRows):
-            if row == 0 or row == 1:
-                for column in range(numRows):
-                    self.allButtons[row * self.dimen + column].image = self.dark_green
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_green)
-                    #   Sets greens starting zone as reds safe zone.
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
-                    self.listBoard[row * self.dimen + column] = 1
+            for column in range(piecesInRow):
+                self.allButtons[row * self.dimen + column].image = self.dark_green
+                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
+                self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                #   Sets greens starting zone as reds safe zone.
+                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
+                self.listBoard[row * self.dimen + column] = 1
 
-                    #   Using the new board representation
-                    self.allBoard |= (1 << (row * self.dimen + column))
-                    self.greenBoard |= (1 << (row * self.dimen + column))
-                    self.redGoal |= (1 << (row * self.dimen + column))
-                    self.eitherGoal |= (1 << (row * self.dimen + column))
-
-            else:
-                for column in range(numRows - row + 1):
-                    self.allButtons[row * self.dimen + column].image = self.dark_green
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_green)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
-                    self.listBoard[row * self.dimen + column] = 1
-
-                    #   Using the new board representation
-                    self.allBoard |= (1 << (row * self.dimen + column))
-                    self.greenBoard |= (1 << (row * self.dimen + column))
-                    self.redGoal |= (1 << (row * self.dimen + column))
-                    self.eitherGoal |= (1 << (row * self.dimen + column))
-
+                #   Using the new board representation
+                self.allBoard |= (1 << (row * self.dimen + column))
+                self.greenBoard |= (1 << (row * self.dimen + column))
+                self.redGoal |= (1 << (row * self.dimen + column))
+                self.eitherGoal |= (1 << (row * self.dimen + column))
+            piecesInRow -= 1
 
         # Set the red pieces
-        tempNumRows = self.dimen - numRows + 1
+        piecesInRow = 4
         for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
+            for column in range(self.dimen - piecesInRow, self.dimen, 1):
+                self.allButtons[row * self.dimen + column].image = self.dark_red
+                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
+                self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
+                self.listBoard[row * self.dimen + column] = 2
 
-            if row == self.dimen - 1 or row == self.dimen - 2:
-                for column in range(self.dimen - numRows, self.dimen):
-                    self.allButtons[row * self.dimen + column].image = self.dark_red
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_red)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
-                    self.listBoard[row * self.dimen + column] = 2
+                #   Using the new board representation
+                self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                self.redBoard |= (1 << (row * self.dimen + column))
+                self.greenGoal |= (1 << (row * self.dimen + column))
+            piecesInRow -= 1
 
-                    #   Using the new board representation
-                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
-                    self.redBoard |= (1 << (row * self.dimen + column))
-                    self.greenGoal |= (1 << (row * self.dimen + column))
-            else:
-                for column in range(tempNumRows, self.dimen):
-                    self.allButtons[row * self.dimen + column].image = self.dark_red
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_red)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
-                    self.listBoard[row * self.dimen + column] = 2
-
-                    #   Using the new board representation
-                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
-                    self.redBoard |= (1 << (row * self.dimen + column))
-                    self.greenGoal |= (1 << (row * self.dimen + column))
-                tempNumRows += 1
 #        for button in self.allButtons:
  #           print(button.text)
         #print(bin(self.allBoard))
@@ -690,14 +663,14 @@ class Halma:
 # @param[in]    board
 #               a dictionary representation of the board
 #
-# @paran[in]    turn
-#               an interger corresponding to whose turn it is as the max level
+# @param[in]    turn
+#               an integer corresponding to whose turn it is as the max level
 #               1 for green     2 for red
 #
 # @param[in]    opposingTurn
 #               an integer corresponding to whose turn it will be next turn
 #
-# @paran[in]    depth
+# @param[in]    depth
 #               the current remaining iterations
 #
 # @param[in]    path
