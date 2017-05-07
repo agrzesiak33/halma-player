@@ -62,69 +62,42 @@ class Board:
 
         self.numPieces = numPieces
         # if (numPieces == 19):
-        numRows = 2
+        numRows = 4
 
         # Set the green pieces
+        piecesInRow = 4
         for row in range(numRows):
-            if row == 0 or row == 1:
-                for column in range(numRows):
-                    self.allButtons[row * self.dimen + column].image = self.dark_green
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_green)
-                    #   Sets greens starting zone as reds safe zone.
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
-                    self.listBoard[row * self.dimen + column] = 1
+            for column in range(piecesInRow):
+                self.allButtons[row * self.dimen + column].image = self.dark_green
+                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
+                self.allButtons[row * self.dimen + column].config(image=self.dark_green)
+                #   Sets greens starting zone as reds safe zone.
+                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
+                self.listBoard[row * self.dimen + column] = 1
 
-                    #   Using the new board representation
-                    self.allBoard |= (1 << (row * self.dimen + column))
-                    self.greenBoard |= (1 << (row * self.dimen + column))
-                    self.redGoal |= (1 << (row * self.dimen + column))
-                    self.eitherGoal |= (1 << (row * self.dimen + column))
-
-            else:
-                for column in range(numRows - row + 1):
-                    self.allButtons[row * self.dimen + column].image = self.dark_green
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_green)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 2"
-                    self.listBoard[row * self.dimen + column] = 1
-
-                    #   Using the new board representation
-                    self.allBoard |= (1 << (row * self.dimen + column))
-                    self.greenBoard |= (1 << (row * self.dimen + column))
-                    self.redGoal |= (1 << (row * self.dimen + column))
-                    self.eitherGoal |= (1 << (row * self.dimen + column))
-
+                #   Using the new board representation
+                self.allBoard |= (1 << (row * self.dimen + column))
+                self.greenBoard |= (1 << (row * self.dimen + column))
+                self.redGoal |= (1 << (row * self.dimen + column))
+                self.eitherGoal |= (1 << (row * self.dimen + column))
+            piecesInRow -= 1
 
         # Set the red pieces
-        tempNumRows = self.dimen - numRows + 1
+        piecesInRow = 4
         for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
+            for column in range(self.dimen - piecesInRow, self.dimen, 1):
+                self.allButtons[row * self.dimen + column].image = self.dark_red
+                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
+                self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
+                self.listBoard[row * self.dimen + column] = 2
 
-            if row == self.dimen - 1 or row == self.dimen - 2:
-                for column in range(self.dimen - numRows, self.dimen):
-                    self.allButtons[row * self.dimen + column].image = self.dark_red
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_red)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
-                    self.listBoard[row * self.dimen + column] = 2
+                #   Using the new board representation
+                self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                self.redBoard |= (1 << (row * self.dimen + column))
+                self.greenGoal |= (1 << (row * self.dimen + column))
+            piecesInRow -= 1
 
-                    #   Using the new board representation
-                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
-                    self.redBoard |= (1 << (row * self.dimen + column))
-                    self.greenGoal |= (1 << (row * self.dimen + column))
-            else:
-                for column in range(tempNumRows, self.dimen):
-                    self.allButtons[row * self.dimen + column].image = self.dark_red
-                    self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                    self.allButtons[row * self.dimen + column].config(image=self.dark_red)
-                    self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
-                    self.listBoard[row * self.dimen + column] = 2
-
-                    #   Using the new board representation
-                    self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
-                    self.redBoard |= (1 << (row * self.dimen + column))
-                    self.greenGoal |= (1 << (row * self.dimen + column))
-                tempNumRows += 1
 #        for button in self.allButtons:
  #           print(button.text)
         #print(bin(self.allBoard))
@@ -193,8 +166,11 @@ class Halma:
             self.board.root.update_idletasks()
             self.board.root.update()
 
-            if self.handleWin(self.board.listBoard) is not "none":
-                print("winner")
+            if self.isWin(self.board.greenBoard, self.board.greenGoal) is True:
+                print("Green Won")
+                break
+            elif self.isWin(self.board.redBoard, self.board.redGoal) is True:
+                print("Red won")
                 break
 
             try:
@@ -315,6 +291,11 @@ class Halma:
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
 
             self.numGreenMoves += 1
+
+            if self.isWin(self.board.greenBoard, self.board.greenGoal):
+                self.board.notification.config(text="Green won in " + str(self.numGreenMoves) + " moves")
+                self.board.notification.pack()
+
         else:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red_moved)
@@ -326,13 +307,14 @@ class Halma:
 
             self.numRedMoves += 1
 
+            if self.isWin(self.board.redBoard, self.board.redGoal):
+                self.board.notification.config(text="Red won in " + str(self.numRedMoves) + " moves")
+                self.board.notification.pack()
+
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
         self.board.allBoard |= (1 << (newX * self.dimen + newY))
         self.buttonJustClicked = None
-
-        #   If we are here a valid move just happened and now we check to see if anyone won.
-        self.handleWin(self.board.listBoard)
 
         #   moves the turn to the other person
         if self.turn is 1:
@@ -472,62 +454,22 @@ class Halma:
         else:
             return True
 
-# @brief    checks the current board to see if either team has won
+# @brief    compares the current players board to their goal board to see if they won
 #
-# @details  converted from the code for setting the pieces so if another piece configuration was added
-#               the support would also have to be added here
+# @param[in]    colorBoard
+#               the integer representation of the board for one color
 #
-# @param[out]   string
-#               "red" if red won    "green" if green won    "none" if neither team won
-    def handleWin(self, board):
-        # if (self.numPieces == 19):
-        numRows = 2
+# @param[in]    colorGoal
+#               the integer representation of the board for one color when all pieces are in the base
+#
+# @param[out]   True if the color won   False otherwise
+    @staticmethod
+    def isWin(colorBoard, colorGoal):
 
-        #   Check to see if red has won
-        winner = True
-        for row in range(numRows):
-            if row == 0 or row == 1:
-                for column in range(numRows):
-                    if board[row * self.dimen + column] is not 2:
-                        winner = False
-                        break
-            else:
-                for column in range(numRows - row + 1):
-                    if board[row * self.dimen + column] is not 2:
-                        winner = False
-                        break
-            if not winner:
-                break
-        if winner:
-            self.board.notification.config(text="Red won in "+ str(self.numRedMoves) + " moves")
-            self.board.notification.pack()
-            return "Red"
+        if colorBoard is colorGoal:
+            return True
+        return False
 
-        winner = True
-
-        #   Check to see if green won
-        tempNumRows = self.dimen - numRows + 1
-        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
-            if row == self.dimen - 1 or row == self.dimen - 2:
-                for column in range(self.dimen - numRows, self.dimen):
-                    if self.board.listBoard[row * self.dimen + column] is not 1:
-                        winner = False
-                        break
-            else:
-                for column in range(tempNumRows, self.dimen):
-                    if self.board.listBoard[row * self.dimen + column] is not 1:
-                        winner = False
-                        break
-                tempNumRows += 1
-            if not winner:
-                break
-
-        if winner:
-            self.board.notification.config(text="Green won in " + str(self.numRedMoves) + " moves")
-            self.board.notification.pack()
-            return "Green"
-        else:
-            return "none"
 
 # @brief    Looks over the board and using MiniMax search with aplha beta pruning,
 #               returns the best move within a given time.
@@ -541,7 +483,16 @@ class Halma:
 #
 # @param[out]   a list containing the path and score of the round
 #
-    def findNextMove(self, timeLimit, turn):
+    def findNextMove(self, timeLimit, turn, allBoard=-1, greenBoard=-1, redBoard=-1):
+        #   if allBoard is not -1 we are analyzing so we use the passed in boards instead
+        if allBoard == -1:
+            localAllBoard = self.board.allBoard
+            localGreenBoard = self.board.greenBoard
+            localRedBoard = self.board.redBoard
+        else:
+            localAllBoard = allBoard
+            localGreenBoard = greenBoard
+            localRedBoard = redBoard
         #   Convert the inefficient representation of the board into a better one to pass around
         currentMax = [[], -1]
         if turn is 1:
@@ -554,7 +505,9 @@ class Halma:
         #(endTime)
         #print(time.time())
         for depth in range(3, 100):
-            moveMax = self.Max(self.board.allBoard, self.board.greenBoard, self.board.redBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+
+            #   If we are out of time, moveMax will come back with a value at index 2
             try:
                 moveMax[2]
                 if moveMax[1] > currentMax[1]:
@@ -690,14 +643,14 @@ class Halma:
 # @param[in]    board
 #               a dictionary representation of the board
 #
-# @paran[in]    turn
-#               an interger corresponding to whose turn it is as the max level
+# @param[in]    turn
+#               an integer corresponding to whose turn it is as the max level
 #               1 for green     2 for red
 #
 # @param[in]    opposingTurn
 #               an integer corresponding to whose turn it will be next turn
 #
-# @paran[in]    depth
+# @param[in]    depth
 #               the current remaining iterations
 #
 # @param[in]    path
@@ -801,9 +754,39 @@ class Halma:
             #   TODO    or the score we found above from calling the min function
             return currentMin
 
+    def analyzeMinimax(self):
+        plysVSTime = dict()
+        maxPlys = 0
+
+        allBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        greenBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+        redBoard = 0b0000000000000000000000000000000000000000000000000000000000000000
+
+        #   Create temporary random boards for time testing
+        #   Create green board
+        for piece in range(8):
+            bitShift = random.randint(0, 63)
+            if ~(allBoard & (1 << bitShift)):
+                allBoard |= (1 << bitShift)
+                greenBoard |= (1 << bitShift)
+        #   Create red board
+        for piece in range(8):
+            bitShift = random.randint(0, 63)
+            if ~(allBoard & (1 << bitShift)):
+                allBoard |= (1 << bitShift)
+                redBoard |= (1 << bitShift)
+
+        for time in range(0, 120, 5):
+            plys = self.findNextMove(time, 1, allBoard, greenBoard, redBoard)
+            #print(plys)
+            print(time, ": ", len(plys[0]))
+            plysVSTime[time / 5] = len(plys[0])
+        print(plysVSTime)
+
 
 halma = Halma([[1, 1], [2, 2]], 8)
-halma.play(5)
+halma.analyzeMinimax()
+#halma.play(5)
 
 #   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
 #   TODO    add analytics into minimax
