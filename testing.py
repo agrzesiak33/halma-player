@@ -166,8 +166,11 @@ class Halma:
             self.board.root.update_idletasks()
             self.board.root.update()
 
-            if self.handleWin(self.board.listBoard) is not "none":
-                print("winner")
+            if self.isWin(self.board.greenBoard, self.board.greenGoal) is True:
+                print("Green Won")
+                break
+            elif self.isWin(self.board.redBoard, self.board.redGoal) is True:
+                print("Red won")
                 break
 
             try:
@@ -288,6 +291,11 @@ class Halma:
             self.board.allButtons[oldX * self.dimen + oldY].config(image=self.board.light_green)
 
             self.numGreenMoves += 1
+
+            if self.isWin(self.board.greenBoard, self.board.greenGoal):
+                self.board.notification.config(text="Green won in " + str(self.numGreenMoves) + " moves")
+                self.board.notification.pack()
+
         else:
             self.board.allButtons[newX * self.dimen + newY].image = self.board.dark_red_moved
             self.board.allButtons[newX * self.dimen + newY].config(image=self.board.dark_red_moved)
@@ -299,13 +307,14 @@ class Halma:
 
             self.numRedMoves += 1
 
+            if self.isWin(self.board.redBoard, self.board.redGoal):
+                self.board.notification.config(text="Red won in " + str(self.numRedMoves) + " moves")
+                self.board.notification.pack()
+
         self.board.allButtons[newX * self.dimen + newY].bind("<Button-1>", self.occupiedButton)
         self.board.listBoard[newX * self.dimen + newY] = self.turn
         self.board.allBoard |= (1 << (newX * self.dimen + newY))
         self.buttonJustClicked = None
-
-        #   If we are here a valid move just happened and now we check to see if anyone won.
-        self.handleWin(self.board.listBoard)
 
         #   moves the turn to the other person
         if self.turn is 1:
@@ -445,62 +454,21 @@ class Halma:
         else:
             return True
 
-# @brief    checks the current board to see if either team has won
+# @brief    compares the current players board to their goal board to see if they won
 #
-# @details  converted from the code for setting the pieces so if another piece configuration was added
-#               the support would also have to be added here
+# @param[in]    colorBoard
+#               the integer representation of the board for one color
 #
-# @param[out]   string
-#               "red" if red won    "green" if green won    "none" if neither team won
-    def handleWin(self, board):
-        # if (self.numPieces == 19):
-        numRows = 2
+# @param[in]    colorGoal
+#               the integer representation of the board for one color when all pieces are in the base
+#
+# @param[out]   True if the color won   False otherwise
+    def isWin(self, colorBoard, colorGoal):
 
-        #   Check to see if red has won
-        winner = True
-        for row in range(numRows):
-            if row == 0 or row == 1:
-                for column in range(numRows):
-                    if board[row * self.dimen + column] is not 2:
-                        winner = False
-                        break
-            else:
-                for column in range(numRows - row + 1):
-                    if board[row * self.dimen + column] is not 2:
-                        winner = False
-                        break
-            if not winner:
-                break
-        if winner:
-            self.board.notification.config(text="Red won in "+ str(self.numRedMoves) + " moves")
-            self.board.notification.pack()
-            return "Red"
+        if colorBoard is colorGoal:
+            return True
+        return False
 
-        winner = True
-
-        #   Check to see if green won
-        tempNumRows = self.dimen - numRows + 1
-        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
-            if row == self.dimen - 1 or row == self.dimen - 2:
-                for column in range(self.dimen - numRows, self.dimen):
-                    if self.board.listBoard[row * self.dimen + column] is not 1:
-                        winner = False
-                        break
-            else:
-                for column in range(tempNumRows, self.dimen):
-                    if self.board.listBoard[row * self.dimen + column] is not 1:
-                        winner = False
-                        break
-                tempNumRows += 1
-            if not winner:
-                break
-
-        if winner:
-            self.board.notification.config(text="Green won in " + str(self.numRedMoves) + " moves")
-            self.board.notification.pack()
-            return "Green"
-        else:
-            return "none"
 
 # @brief    Looks over the board and using MiniMax search with aplha beta pruning,
 #               returns the best move within a given time.
