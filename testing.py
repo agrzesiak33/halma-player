@@ -1,12 +1,12 @@
 from tkinter import *
-import math
+import random
 import time
 
 
 class Board:
-    def __init__(self, boardDimensions, emptyFunction, occupiedFunction, numPieces=19):
+    def __init__(self, boardDimensions, emptyFunction, occupiedFunction, numPieces=10):
         self.root = Tk()
-
+        #print(boardDimensions)
         #   Load various pieces
         self.dark_green = PhotoImage(file="images/dark_green_piece.png")
         self.light_green = PhotoImage(file="images/light_green_piece.png")
@@ -42,9 +42,6 @@ class Board:
         #   Initialize the board to the dimensions specified
         self.allButtons = []
         self.listBoard = {}
-
-        self.greenPieces = []
-        self.redPieces = []
 
         self.boardFrame.grid(row=1)
         self.boardFrame.config(bg='black')
@@ -96,6 +93,7 @@ class Board:
                 self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
                 self.redBoard |= (1 << (row * self.dimen + column))
                 self.greenGoal |= (1 << (row * self.dimen + column))
+                self.eitherGoal |= (1 << (row * self.dimen + column))
             piecesInRow -= 1
 
 #        for button in self.allButtons:
@@ -139,12 +137,14 @@ class Halma:
 #               an optional argument with the number of pieces for each team.  This needs to be a certain number
 #                   or else the piece generation function will fail.  19 is standard for Halma but there will be
 #                   support for more piece configurations in teh future
-    def __init__(self, playerConfig, boardSize = 15, numPieces=19):
+    def __init__(self, playerConfig, boardSize = 8, numPieces=10):
         self.dimen = boardSize
         self.numPieces = numPieces
         self.turn = 1
         self.numGreenMoves = 0
         self.numRedMoves = 0
+
+        self.averageTime = 0
 
 
         self.board = Board(boardSize, self.emptyButton, self.occupiedButton, numPieces)
@@ -183,7 +183,6 @@ class Halma:
                     self.board.root.update()
 
                     pathToBestBoard = self.findNextMove(turnTime, self.turn)
-                    print("path: ", pathToBestBoard)
                     pieceToMove = pathToBestBoard[0][0]
                     spaceToMoveTo = pathToBestBoard[0][0]
 
@@ -558,16 +557,22 @@ class Halma:
         #print("max depth: ", depth)
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
-        #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
         if time.time() > endTime:
-            return [path, 999999999999, -1]
+            if turn == 1:
+                boardScore = self.boardEval(greenBoard, self.board.greenGoal, turn)
+            else:
+                boardScore = self.boardEval(redBoard, self.board.redGoal, turn)
+            return [path, boardScore, -1]
 
         if depth <= 0:
-            #   TODO    call the to be made eval function with turn is the turn parameter in the function
             #       we would be calling eval with turn in this case because if we are out of depth,
             #           that means that Min (red) is calling this function and min (red) selects the worst
             #           possible move for green and not necessarily the one that helps red the most
-            return [path, 0]
+            if turn == 1:
+                boardScore = self.boardEval(greenBoard, self.board.greenGoal, turn)
+            else:
+                boardScore = self.boardEval(redBoard, self.board.redGoal, turn)
+            return [path, boardScore]
         else:
             localPath = list(path)
             localBoard = int(board)
@@ -582,11 +587,9 @@ class Halma:
             for moveSet in allMoves:
                 for move in moveSet[2]:
                     #   Set old space to empty
-                    #localBoard[moveSet[0] * self.dimen + moveSet[1]] = 0
                     localBoard &= ~(1 << (moveSet[0] * self.dimen + moveSet[1]))
                     #   Set the new piece
                     localBoard |= (1 << (move[0] * self.dimen + move[1]))
-                    # localBoard[move[0] * self.dimen + move[1]] = turn
 
                     if turn == 1:
                         #   Clear the green board piece
@@ -672,17 +675,25 @@ class Halma:
         #print("Min depth:, ",depth)
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
-        #   TODO    call the to be eval function to get the goodness of this board and replace 99999999999 with it
         if time.time() > endTime:
-            return [path, 999999999999, -1]
+            #   Since we are in a min node we want to know the goodness of the opposing players board
+            if opposingTurn == 1:
+                boardScore = self.boardEval(greenBoard, self.board.greenGoal, opposingTurn)
+            else:
+                boardScore = self.boardEval(redBoard, self.board.redGoal, opposingTurn)
+
+            return [path, boardScore, -1]
 
 
         if depth <= 0:
-            #   TODO     call the to be made eval function with opposingTurn is the turn parameter in the function
             #       we would be calling eval with opposingTurn in this case because if we are out of depth,
             #           that means that Max (green) is calling this function and so we have to return the board
             #           evaluation with respect green.
-            return [path, 0]
+            if opposingTurn == 1:
+                boardScore = self.boardEval(greenBoard, self.board.greenGoal, opposingTurn)
+            else:
+                boardScore = self.boardEval(redBoard, self.board.redGoal, opposingTurn)
+            return [path, boardScore]
         else:
             localPath = list(path)
             localBoard = int(board)
@@ -699,11 +710,9 @@ class Halma:
                 for move in moveSet[2]:
 
                     #   Set old space to empty
-                    # localBoard[moveSet[0] * self.dimen + moveSet[1]] = 0
                     localBoard &= ~(1 << (moveSet[0] * self.dimen + moveSet[1]))
                     #   Set the new piece
                     localBoard |= (1 << (move[0] * self.dimen + move[1]))
-                    # localBoard[move[0] * self.dimen + move[1]] = turn
 
                     if turn == 1:
                         #   Clear the green board piece
@@ -753,6 +762,115 @@ class Halma:
             #   TODO    replace these placeholder strings with either an array with passed in path and highest score
             #   TODO    or the score we found above from calling the min function
             return currentMin
+
+    def boardEval(self, color_board, color_goal, turn):
+        score = 0.0
+
+        #   If it is the green board that we are looking at...
+        if turn == 1:
+            for x in range(self.dimen):
+                for y in range(self.dimen):
+                    #   Making sure there is a piece there.
+                    if color_board & (1 << (x * self.dimen + y)):
+
+                        #   First check to see if the piece is in the base.
+                        try:
+                            color_goal & (1 << (x * self.dimen + y))
+                            if color_goal & (1 << (x * self.dimen + y)):
+                                score += 1
+
+                            #   If we have to compute the distance to the goal
+                            else:
+                                distance = self.getDistanceToGoal(x, y, color_goal, 1)
+                                score += (1 / distance)
+                        except ValueError:
+                            pass
+
+        # If it is the red board we are looking at...
+        else:
+            for x in range(self.dimen):
+                for y in range(self.dimen):
+                    #   Making sure there is a piece there
+                    if color_board & (1 << (x * self.dimen + y)):
+
+                        #   First check to see if the piece is in the base.
+                        try:
+                            color_goal & (1 << (x * self.dimen + y))
+                            if color_goal & (1 << (x * self.dimen + y)):
+                                score += 1
+
+                            # If we have to compute the distance to the goal
+                            else:
+                                distance = self.getDistanceToGoal(x, y, color_goal, -1)
+
+                                score += (1 / distance)
+                        except ValueError:
+                            pass
+        return score
+
+# @brief    Takes in a point and computes the spaces from it to the goal
+#
+# @param[in]    row
+#               the row starting position
+#
+# @param[in]    column
+#               the column starting position
+#
+# @param[in]    goalBoard
+#               the board correspoinding to the goal of whichever color we are
+#
+# @param[in]    increment
+#               this will either be positive 1 or negative 1
+#               +1 is we are trying to find the distance to the red base since red goal is in bottom right and positive
+#               numbers get us closer to its goal.  -1 if we are finding distance to green goal because of the opposite
+#
+# @param[out]   integer
+#               the number of moves away from the goal a piece is
+    def getDistanceToGoal(self, row, column, goalBoard, increment):
+        startState = 1 << (row  * self.dimen + column)
+        tempRow = row
+        tempColumn = column
+
+        spaces = 0
+
+        #   Go diagonally until we run out of space
+        while 0 <= tempRow < self.dimen and 0 <= tempColumn < self.dimen:
+            if goalBoard & startState:
+                return spaces
+
+            tempRow += increment
+            tempColumn += increment
+
+            spaces += 1
+
+            #   We are still on the board
+            try:
+                startState |= (1 << tempRow * self.dimen + tempColumn)
+            #   We have fallen off the board
+            except ValueError:
+                spaces -= 1
+                break
+
+
+
+
+        #   Since the previous while overshot the board once, we have to subtract 1 from the move counter and then move
+        #       horizontally or vertically until it reaches a goal
+
+
+        if tempRow < 0 or tempRow >= self.dimen:
+            tempColumn -= increment    #   Normalize tempColumns back on the board
+            spaces += (tempColumn + (4 * increment) + 1)     #   We add one since the indexing starts at 0
+            return spaces
+        #   If we ran out of columns, we just need to go vertically until we reach the base...
+        elif tempColumn < 0 or tempColumn >= self.dimen:
+            tempRow -= increment
+            spaces += tempRow + (4 * increment) + 1
+            return spaces
+
+
+
+
 
     def analyzeMinimax(self):
         plysVSTime = dict()
