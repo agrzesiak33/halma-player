@@ -27,14 +27,18 @@ class Board:
         self.eitherGoal = 0b0000000000000000000000000000000000000000000000000000000000000000
 
         #   The frames that hold all the content for the window
-        self.notificationFrame = Frame(self.root, height=50)
+        self.notificationFrame = Frame(self.root)
         self.boardFrame = Frame(self.root)
 
         self.dimen = boardDimensions
 
+
         #   Set the notification bar to welcome the players
         self.notification = Label(self.notificationFrame, text="Welcome to Halma")
-        self.notification.pack()
+        self.notification.grid(row=0)
+        self.timeRemaining = Label(self.notificationFrame, text="temp time remaining")
+        self.timeRemaining.grid(row=1)
+
         self.notificationFrame.grid(row=0)
 
         self.buttonJustClicked = None
@@ -144,7 +148,7 @@ class Halma:
         self.numGreenMoves = 0
         self.numRedMoves = 0
 
-        self.averageTime = 0
+        self.updateTime = 0
 
         self.computer1 = 0
         self.computer2 = 0
@@ -171,19 +175,25 @@ class Halma:
             self.board.root.update_idletasks()
             self.board.root.update()
 
-            if self.isWin(self.board.greenBoard, self.board.greenGoal) is True:
-                print("Green Won")
-                break
-            elif self.isWin(self.board.redBoard, self.board.redGoal) is True:
-                print("Red won")
-                break
+            #   If the green goal is filled with pieces but the green goal is not filled wiht red pieces
+            if (self.board.allBoard & self.board.greenGoal) == self.board.greenGoal and self.board.greenGoal != self.board.redBoard:
+                self.board.notification.config(text="!!!!!!!!Red Won!!!!!!!!!!")
+                self.board.root.update()
+                self.board.clearPieceClickListener(1)
+                self.board.clearPieceClickListener(2)
+
+            elif (self.board.allBoard & self.board.redGoal) == self.board.redGoal and self.board.redGoal != self.board.greenBoard:
+                self.board.notification.config(text="!!!!!!!Green Won!!!!!!!!!!")
+                self.board.root.update()
+                self.board.clearPieceClickListener(1)
+                self.board.clearPieceClickListener(2)
+
 
             if self.computer1 != 0 or self.computer2 != 0:
                 #   If it is the computers turn we have to find his move and make it
                 if self.computer1 is self.turn:
                     #   Let the human know the computer is thinking
                     self.board.notification.config(text="Computer is thinking")
-                    self.board.notification.pack()
                     self.board.root.update()
 
                     pathToBestBoard = self.findNextMove(turnTime, self.turn)
@@ -194,12 +204,10 @@ class Halma:
 
                     #   Once the computer moved, we can let the human know it is their turn
                     self.board.notification.config(text="Hooman, it is your turn")
-                    self.board.notification.pack()
 
                 elif self.computer2 is self.turn:
                     #   Let the human know the computer is thinking
                     self.board.notification.config(text="Computer is thinking")
-                    self.board.notification.pack()
                     self.board.root.update()
 
                     pathToBestBoard = self.findNextMove(turnTime, self.turn)
@@ -210,7 +218,6 @@ class Halma:
 
                     #   Once the computer moved, we can let the human know it is their turn
                     self.board.notification.config(text="Hooman, it is your turn")
-                    self.board.notification.pack()
 
 
 
@@ -518,11 +525,29 @@ class Halma:
 
         endTime = time.time()
         endTime += timeLimit
-        #(endTime)
-        #print(time.time())
-        for depth in range(3, 100):
-            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
 
+        #   Sampling average time vs depth and making a start depth
+
+        if timeLimit < 7:
+            depthStart = 4      #   ~1 Second
+
+        elif timeLimit <= 30:
+            depthStart = 5      #   ~6 seconds
+
+        elif timeLimit <= 60:
+            depthStart = 6      #   ~45-60 seconds
+
+        else:
+            depthStart = 7      #   ~800-900 seconds
+
+        #   depthStart = 8          ~2-3 hours
+
+
+        for depth in range(depthStart, 100):
+            startTime = time.time()
+            self.updateTime = startTime + .5
+            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            print(moveMax)
             #   If we are out of time, moveMax will come back with a value at index 2
             try:
                 moveMax[2]
@@ -532,10 +557,11 @@ class Halma:
                     return currentMax
             except (IndexError, TypeError) as e:
                 pass
-            print(moveMax)
+
             if moveMax[1] > currentMax[1]:
                 currentMax = moveMax
 
+            print("Ply: ", depth, "     Time: ", time.time()-startTime)
         return currentMax
 
 
@@ -571,7 +597,6 @@ class Halma:
 #               [ path : list, goodness : integer]
 #               path is of the form:  [[startX, startY], [moveX, moveY],...]
     def Max(self, board, greenBoard, redBoard, turn, opposingTurn, depth, path, alpha, beta, endTime):
-        #print("max depth: ", depth)
         #   First we make sure we have time to do more searching
         #   If we are out of time we return something different than usual
         if time.time() > endTime:
@@ -580,6 +605,11 @@ class Halma:
             else:
                 boardScore = self.boardEval(redBoard, self.board.redGoal, turn)
             return [path, boardScore, -1]
+
+        if time.time() > self.updateTime:
+            self.board.timeRemaining.config(text=str(int(endTime - time.time())) + " seconds remaining")
+            self.board.root.update()
+            self.updateTime += .5
 
         if depth <= 0:
             #       we would be calling eval with turn in this case because if we are out of depth,
@@ -630,7 +660,6 @@ class Halma:
 
                     #   Calculate one of the min values coming back and reset variables
                     moveMin = self.Min(localBoard, localGreen, localRed, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
-
                     #   Usually this try will fail but if it doesn't it means we're out of time and we return whatever
                     #       value we were working on
                     try:
@@ -801,13 +830,22 @@ class Halma:
                         try:
                             color_goal & (1 << (x * self.dimen + y))
                             if color_goal & (1 << (x * self.dimen + y)):
-                                score += 5
+                                if self.numGreenMoves < 10:
+                                    score += 1
+                                elif self.numGreenMoves < 15:
+                                    score += 5
+                                else:
+                                    score += 8
 
                             #   If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, 1)
-                                distance += 1
-                                score += (1 / distance)
+                                if self.numGreenMoves < 5:
+                                    score += (4 / distance)
+                                elif self.numGreenMoves < 10:
+                                    score += (2 / distance)
+                                else:
+                                    score += (1 / distance)
                         except ValueError:
                             pass
 
@@ -822,13 +860,22 @@ class Halma:
                         try:
                             color_goal & (1 << (x * self.dimen + y))
                             if color_goal & (1 << (x * self.dimen + y)):
-                                score += 5
+                                if self.numRedMoves < 10:
+                                    score += 1
+                                elif self.numRedMoves < 15:
+                                    score += 5
+                                else:
+                                    score += 8
 
                             # If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, -1)
-                                distance += 1
-                                score += (1 / distance)
+                                if self.numRedMoves < 5:
+                                    score += (4 / distance)
+                                elif self.numRedMoves < 10:
+                                    score += (2 / distance)
+                                else:
+                                    score += (1 / distance)
                         except ValueError:
                             pass
         return score
@@ -926,14 +973,18 @@ class Halma:
             plysVSTime[time / 5] = len(plys[0])
         print(plysVSTime)
 
+#   Both computers
+#halma = Halma([[1, 2], [2, 2]], 8)
 
-halma = Halma([[1, 1], [2, 2]], 8)
-halma.analyzeMinimax()
-#halma.play(5)
+#   Green Computer
+halma = Halma([[1, 2], [2, 1]], 8)
 
-#   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
-#   TODO    add analytics into minimax
-#   TODO    make the UI update with the time remaining
+#   Red Computer
+#halma = Halma([[1, 1], [2, 2]], 8)
+
+#halma.analyzeMinimax()
+halma.play(5)
+
 #   TODO    once someone wins, display the number of moves made and teh final score
 #               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
 #                   the piece to the base
