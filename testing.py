@@ -146,16 +146,21 @@ class Halma:
 
         self.averageTime = 0
 
+        self.computer1 = 0
+        self.computer2 = 0
 
         self.board = Board(boardSize, self.emptyButton, self.occupiedButton, numPieces)
 
         self.buttonJustClicked = None
 
         if playerConfig[0][1] is 2:
-            self.computer = playerConfig[0][0]
+            self.computer1 = playerConfig[0][0]
             self.board.clearPieceClickListener(playerConfig[0][0])
-        elif playerConfig[1][1] is 2:
-            self.computer = playerConfig[1][0]
+        if playerConfig[1][1] is 2:
+            if self.computer1 != 0:
+                self.computer2 = playerConfig[1][0]
+            else:
+                self.computer1 = playerConfig[1][0]
             self.board.clearPieceClickListener(playerConfig[1][0])
 
         #(self.generateAllLegalMoves(self.turn, self.board.listBoard))
@@ -173,10 +178,9 @@ class Halma:
                 print("Red won")
                 break
 
-            try:
-                self.computer
+            if self.computer1 != 0 or self.computer2 != 0:
                 #   If it is the computers turn we have to find his move and make it
-                if self.computer is self.turn:
+                if self.computer1 is self.turn:
                     #   Let the human know the computer is thinking
                     self.board.notification.config(text="Computer is thinking")
                     self.board.notification.pack()
@@ -192,9 +196,22 @@ class Halma:
                     self.board.notification.config(text="Hooman, it is your turn")
                     self.board.notification.pack()
 
+                elif self.computer2 is self.turn:
+                    #   Let the human know the computer is thinking
+                    self.board.notification.config(text="Computer is thinking")
+                    self.board.notification.pack()
+                    self.board.root.update()
 
-            except AttributeError:
-                pass
+                    pathToBestBoard = self.findNextMove(turnTime, self.turn)
+                    pieceToMove = pathToBestBoard[0][0]
+                    spaceToMoveTo = pathToBestBoard[0][0]
+
+                    self.movePiece(pieceToMove[0], pieceToMove[1], spaceToMoveTo[2], spaceToMoveTo[3])
+
+                    #   Once the computer moved, we can let the human know it is their turn
+                    self.board.notification.config(text="Hooman, it is your turn")
+                    self.board.notification.pack()
+
 
 
 # @brief    Handles the clicked events where there is no piece on the tile
