@@ -518,11 +518,28 @@ class Halma:
 
         endTime = time.time()
         endTime += timeLimit
-        #(endTime)
-        #print(time.time())
-        for depth in range(3, 100):
-            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
 
+        #   Sampling average time vs depth and making a start depth
+
+        if timeLimit < 4:
+            depthStart = 4      #   ~1 Second
+
+        elif timeLimit <= 30:
+            depthStart = 5      #   ~6 seconds
+
+        elif timeLimit <= 60:
+            depthStart = 6      #   ~45-60 seconds
+
+        else:
+            depthStart = 7      #   ~800-900 seconds
+
+        #   depthStart = 8          ~2-3 hours
+
+
+        for depth in range(depthStart, 100):
+            startTime = time.time()
+            moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
+            print(moveMax)
             #   If we are out of time, moveMax will come back with a value at index 2
             try:
                 moveMax[2]
@@ -532,10 +549,11 @@ class Halma:
                     return currentMax
             except (IndexError, TypeError) as e:
                 pass
-            print(moveMax)
+
             if moveMax[1] > currentMax[1]:
                 currentMax = moveMax
 
+            print("Ply: ", depth, "     Time: ", time.time()-startTime)
         return currentMax
 
 
@@ -926,13 +944,10 @@ class Halma:
             plysVSTime[time / 5] = len(plys[0])
         print(plysVSTime)
 
-
 halma = Halma([[1, 1], [2, 2]], 8)
-halma.analyzeMinimax()
-#halma.play(5)
+#halma.analyzeMinimax()
+halma.play(10000000)
 
-#   TODO    INTEGRATE THE UTILITY FUNCTION INTO MIN AND MAX
-#   TODO    add analytics into minimax
 #   TODO    make the UI update with the time remaining
 #   TODO    once someone wins, display the number of moves made and teh final score
 #               the score is +1 for each piece in the camp + 1/d for each piece outside where d = shortest distance from
