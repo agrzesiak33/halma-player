@@ -547,7 +547,7 @@ class Halma:
             startTime = time.time()
             self.updateTime = startTime + .5
             moveMax = self.Max(localAllBoard, localGreenBoard, localRedBoard, self.turn, opposingTurn, depth, [], -999999999, 999999999, endTime)
-            print(moveMax)
+            # print(moveMax)
             #   If we are out of time, moveMax will come back with a value at index 2
             try:
                 moveMax[2]
@@ -561,7 +561,7 @@ class Halma:
             if moveMax[1] > currentMax[1]:
                 currentMax = moveMax
 
-            print("Ply: ", depth, "     Time: ", time.time()-startTime)
+            #print("Ply: ", depth, "     Time: ", time.time()-startTime)
         return currentMax
 
 
