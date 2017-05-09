@@ -591,18 +591,25 @@ class Halma:
                     #   Set the new piece
                     localBoard |= (1 << (move[0] * self.dimen + move[1]))
 
+                    localPath.append([moveSet[0], moveSet[1], move[0], move[1]])
+
                     if turn == 1:
                         #   Clear the green board piece
                         localGreen &= ~(1 << (moveSet[0] * self.dimen + moveSet[1]))
                         #   Set the new piece
                         localGreen |= (1 << (move[0] * self.dimen + move[1]))
+
+                        if localGreen == self.board.greenGoal:
+                            return [localPath, 9999999999, -1]
                     else:
                         #   Clear the red board piece
                         localRed &= ~(1 << (moveSet[0] * self.dimen + moveSet[1]))
                         #   Set the new piece
                         localRed |= (1 << (move[0] * self.dimen + move[1]))
 
-                    localPath.append([moveSet[0], moveSet[1], move[0], move[1]])
+                        if localRed == self.board.redGoal:
+                            return [localPath, 9999999999, -1]
+
 
                     #   Calculate one of the min values coming back and reset variables
                     moveMin = self.Min(localBoard, localGreen, localRed, opposingTurn, turn, depth - 1, localPath, alpha, beta, endTime)
@@ -777,11 +784,12 @@ class Halma:
                         try:
                             color_goal & (1 << (x * self.dimen + y))
                             if color_goal & (1 << (x * self.dimen + y)):
-                                score += 1
+                                score += 5
 
                             #   If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, 1)
+                                distance += 1
                                 score += (1 / distance)
                         except ValueError:
                             pass
@@ -797,12 +805,12 @@ class Halma:
                         try:
                             color_goal & (1 << (x * self.dimen + y))
                             if color_goal & (1 << (x * self.dimen + y)):
-                                score += 1
+                                score += 5
 
                             # If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, -1)
-
+                                distance += 1
                                 score += (1 / distance)
                         except ValueError:
                             pass
