@@ -69,6 +69,23 @@ class Board:
         piecesInRow = 4
         for row in range(numRows):
             for column in range(piecesInRow):
+                self.allButtons[row * self.dimen + column].image = self.dark_red
+                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
+                self.allButtons[row * self.dimen + column].config(image=self.dark_red)
+                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
+                self.listBoard[row * self.dimen + column] = 2
+
+                #   Using the new board representation
+                self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
+                self.redBoard |= (1 << (row * self.dimen + column))
+                self.greenGoal |= (1 << (row * self.dimen + column))
+                self.eitherGoal |= (1 << (row * self.dimen + column))
+            piecesInRow -= 1
+
+        # Set the red pieces
+        piecesInRow = 4
+        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
+            for column in range(self.dimen - piecesInRow, self.dimen, 1):
                 self.allButtons[row * self.dimen + column].image = self.dark_green
                 self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
                 self.allButtons[row * self.dimen + column].config(image=self.dark_green)
@@ -80,23 +97,6 @@ class Board:
                 self.allBoard |= (1 << (row * self.dimen + column))
                 self.greenBoard |= (1 << (row * self.dimen + column))
                 self.redGoal |= (1 << (row * self.dimen + column))
-                self.eitherGoal |= (1 << (row * self.dimen + column))
-            piecesInRow -= 1
-
-        # Set the red pieces
-        piecesInRow = 4
-        for row in range(self.dimen - 1, self.dimen - numRows - 1, -1):
-            for column in range(self.dimen - piecesInRow, self.dimen, 1):
-                self.allButtons[row * self.dimen + column].image = self.dark_red
-                self.allButtons[row * self.dimen + column].bind("<Button-1>", occupiedFunction)
-                self.allButtons[row * self.dimen + column].config(image=self.dark_red)
-                self.allButtons[row * self.dimen + column].text = str(row) + "," + str(column) + ", 1"
-                self.listBoard[row * self.dimen + column] = 2
-
-                #   Using the new board representation
-                self.allBoard = self.allBoard | (1 << (row * self.dimen + column))
-                self.redBoard |= (1 << (row * self.dimen + column))
-                self.greenGoal |= (1 << (row * self.dimen + column))
                 self.eitherGoal |= (1 << (row * self.dimen + column))
             piecesInRow -= 1
 
