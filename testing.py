@@ -840,6 +840,8 @@ class Halma:
                             #   If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, 1)
+                                if distance == 0:
+                                    distance = 1
                                 if self.numGreenMoves < 5:
                                     score += (4 / distance)
                                 elif self.numGreenMoves < 10:
@@ -870,6 +872,8 @@ class Halma:
                             # If we have to compute the distance to the goal
                             else:
                                 distance = self.getDistanceToGoal(x, y, color_goal, -1)
+                                if distance == 0:
+                                    distance = 1
                                 if self.numRedMoves < 5:
                                     score += (4 / distance)
                                 elif self.numRedMoves < 10:
